@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SwingScope — Crypto Swing-Trade Research</title>
+<style>
+:root{
+  --bg:#000000;--panel:#111113;--panel2:#1c1c1e;--border:#27272a;
+  --text:#ffffff;--muted:#8e8e93;--green:#00c805;--red:#ff3b30;--yellow:#ffb800;--accent:#0a84ff;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+header{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:60px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:50}
+.logo{font-size:17px;font-weight:700;letter-spacing:-.2px}
+.logo span{color:var(--accent)}
+nav{display:flex;gap:2px;height:100%}
+nav button{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);padding:0 14px;height:100%;font-size:14px;font-weight:600;cursor:pointer}
+nav button.active{color:var(--text);border-bottom-color:var(--text)}
+nav button:hover{color:var(--text)}
+main{max-width:1100px;margin:0 auto;padding:32px 24px}
+.tabs-hidden{display:none}
+.grid{display:grid;gap:14px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:820px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.card h3{font-size:13px;color:var(--muted);font-weight:600;margin-bottom:10px}
+.big{font-size:26px;font-weight:700;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
+.pos{color:var(--green)} .neg{color:var(--red)} .warn{color:var(--yellow)}
+.muted{color:var(--muted)}
+.btn{background:var(--text);color:#000;border:none;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer}
+.btn:disabled{opacity:.5;cursor:default}
+.btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--text)}
+.btn-danger{background:transparent;color:var(--red);border:1px solid rgba(255,59,48,.4)}
+.btn-sm{padding:7px 13px;font-size:13px;border-radius:8px}
+input,select,textarea{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;color:var(--muted);font-weight:500;font-size:12px;padding:8px 10px;border-bottom:1px solid var(--border)}
+th.sortable{cursor:pointer;user-select:none;white-space:nowrap}
+th.sortable:hover{color:var(--text)}
+td{padding:12px 10px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+.pill{display:inline-block;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600}
+.pill-buy{background:rgba(0,200,5,.12);color:var(--green)}
+.pill-sell{background:rgba(255,59,48,.12);color:var(--red)}
+.pill-hold{background:rgba(255,184,0,.12);color:var(--yellow)}
+.pill-watch{background:rgba(10,132,255,.12);color:var(--accent)}
+.pill-na{background:var(--panel2);color:var(--muted)}
+.check-pass{color:var(--green);font-weight:600}
+.check-fail{color:var(--red);font-weight:600}
+.check-na{color:var(--muted)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+.section-title{font-size:17px;font-weight:700;margin:30px 0 12px;letter-spacing:-.2px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:500}
+.empty{color:var(--muted);text-align:center;padding:26px 10px;font-size:14px}
+.score-bar{height:6px;background:var(--panel2);border-radius:3px;overflow:hidden;margin-top:8px}
+.score-bar div{height:100%;border-radius:3px}
+.verdict-box{border-radius:12px;padding:14px 16px;font-size:14px}
+.v-buy{background:rgba(0,200,5,.08)}
+.v-watch{background:rgba(10,132,255,.08)}
+.v-avoid{background:rgba(255,59,48,.08)}
+.v-hold{background:rgba(255,184,0,.08)}
+.stat-row{display:flex;gap:32px;padding:20px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:24px;flex-wrap:wrap}
+.stat{display:flex;flex-direction:column;gap:4px}
+.stat-label{color:var(--muted);font-size:13px}
+.stat-value{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums}
+.disclaimer{font-size:12px;color:var(--muted);border-top:1px solid var(--border);margin-top:40px;padding:20px 0;text-align:center;line-height:1.6}
+.banner{background:rgba(255,184,0,.08);border:1px solid rgba(255,184,0,.35);border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.6;margin-bottom:20px}
+.banner b{color:var(--yellow)}
+small.src{color:var(--muted)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:11px 18px;border-radius:10px;font-size:14px;z-index:200}
+.chart-box{position:relative;height:170px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Swing<span>Scope</span></div>
+  <nav>
+    <button data-tab="dashboard" class="active" onclick="showTab('dashboard')">Dashboard</button>
+    <button data-tab="watchlist" onclick="showTab('watchlist')">Watchlist</button>
+    <button data-tab="discover" onclick="showTab('discover')">Discover</button>
+    <button data-tab="analyzer" onclick="showTab('analyzer')">Analyzer</button>
+    <button data-tab="journal" onclick="showTab('journal')">Trade Journal</button>
+    <button data-tab="settings" onclick="showTab('settings')">Settings</button>
+  </nav>
+  <div class="row">
+    <input id="globalSearch" placeholder="Jump to coin…" style="max-width:140px" onkeydown="if(event.key==='Enter')globalJump()">
+    <button class="btn btn-ghost btn-sm" onclick="globalJump()">Go</button>
+  </div>
+</header>
+
+<main>
+
+<!-- DASHBOARD -->
+<div id="tab-dashboard">
+  <div style="font-size:22px;font-weight:700;letter-spacing:-.3px;margin-bottom:2px">SwingScope</div>
+  <div class="muted" style="margin-bottom:24px">Crypto-only swing-trade research: candle signals, a volatility-sized stop/target for every coin, a probability projection, and a place to discover coins beyond your list. No API key, no signup — CoinGecko's free public data, used as-is.</div>
+  <div id="welcomeCard" class="card" style="display:none;margin-bottom:20px">
+    <h3 style="margin-bottom:10px;color:var(--text);font-size:16px">Get started</h3>
+    <p class="muted" style="margin-bottom:10px">1. Add a coin in <b>Watchlist</b> (symbol like BTC, or a full name).</p>
+    <p class="muted" style="margin-bottom:10px">2. Hit <b>Refresh all</b> — every coin gets a technical score and a suggested stop/target.</p>
+    <p class="muted">3. Use <b>Discover</b> to browse coins by category you might not already know, or <b>Analyzer</b> for a deep dive with the probability projection.</p>
+  </div>
+  <div class="stat-row">
+    <div class="stat"><span class="stat-label">Coins watched</span><span class="stat-value" id="dCount">0</span></div>
+    <div class="stat"><span class="stat-label">Setups flagged</span><span class="stat-value pos" id="dSetupCount">0</span></div>
+    <div class="stat"><span class="stat-label">Open journal trades</span><span class="stat-value" id="dJournalCount">0</span></div>
+  </div>
+  <div class="section-title">Today's setups</div>
+  <div class="card"><div id="signalsList"><div class="empty">Add coins to your watchlist, then hit Refresh all. Setups show up here.</div></div></div>
+  <div class="row" style="margin-top:14px">
+    <button class="btn" onclick="refreshAll()">Refresh all</button>
+    <span class="muted" id="lastRefresh"></span>
+  </div>
+  <div id="journalDueList"></div>
+</div>
+
+<!-- WATCHLIST -->
+<div id="tab-watchlist" class="tabs-hidden">
+  <div class="card">
+    <h3 style="color:var(--text);font-size:16px;margin-bottom:10px">Add a coin</h3>
+    <div class="row">
+      <input id="cTicker" placeholder="Symbol or name (e.g. BTC, ethereum, SOL)" style="max-width:260px" onkeydown="if(event.key==='Enter')addWatch()">
+      <button class="btn" onclick="addWatch()">Add</button>
+    </div>
+  </div>
+  <div class="section-title">Watching</div>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr>
+        <th class="sortable" id="wTh_sym" onclick="sortWatch('sym')">Coin</th>
+        <th class="sortable" id="wTh_price" onclick="sortWatch('price')">Price</th>
+        <th class="sortable" id="wTh_fund" onclick="sortWatch('fund')">Fundamentals</th>
+        <th class="sortable" id="wTh_tech" onclick="sortWatch('tech')">Technical</th>
+        <th class="sortable" id="wTh_signal" onclick="sortWatch('signal')">Setup</th>
+        <th>Suggested Stop / Target</th>
+        <th></th>
+      </tr></thead>
+      <tbody id="watchBody"></tbody>
+    </table>
+    <p class="muted" style="margin-top:10px">Click a column header to sort. "Setup" is informational, not an instruction — see the checklist behind each score in Analyzer before acting.</p>
+    <div id="watchEmpty" class="empty">No coins yet. Add one above.</div>
+  </div>
+</div>
+
+<!-- DISCOVER -->
+<div id="tab-discover" class="tabs-hidden">
+  <div class="card">
+    <h3 style="color:var(--text);font-size:16px;margin-bottom:10px">Browse by category</h3>
+    <p class="muted" style="margin-bottom:12px">Pulled live from CoinGecko's own category data — not a fixed list I wrote in, so it stays current and covers coins you may never have heard of.</p>
+    <div class="row">
+      <input id="categorySearch" placeholder="Search categories (e.g. layer 1, meme, DeFi, gaming)…" style="max-width:280px" onkeydown="if(event.key==='Enter')searchCategories()">
+      <button class="btn btn-ghost btn-sm" onclick="searchCategories()">Search</button>
+    </div>
+    <div id="categoryMatches" class="row" style="margin-top:10px"></div>
+  </div>
+  <div class="section-title">Results</div>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Coin</th><th>Price</th><th>Market Cap Rank</th><th>24h</th><th>7d</th><th></th></tr></thead>
+      <tbody id="discoverBody"></tbody>
+    </table>
+    <div id="discoverEmpty" class="empty">Search a category above to see coins in it.</div>
+  </div>
+</div>
+
+<!-- ANALYZER -->
+<div id="tab-analyzer" class="tabs-hidden">
+  <div class="card">
+    <h3 style="color:var(--text);font-size:16px;margin-bottom:10px">Analyze a coin</h3>
+    <div class="row">
+      <input id="aTicker" placeholder="Symbol or name" style="max-width:260px" onkeydown="if(event.key==='Enter')runAnalyzer()">
+      <button class="btn" onclick="runAnalyzer()">Analyze</button>
+    </div>
+  </div>
+  <div id="analyzerResult"></div>
+</div>
+
+<!-- JOURNAL -->
+<div id="tab-journal" class="tabs-hidden">
+  <div class="card">
+    <h3 style="color:var(--text);font-size:16px;margin-bottom:10px">Log a trade you placed yourself</h3>
+    <p class="muted" style="margin-bottom:12px">Purely a personal record, typed in by you — this does not read your wallet or exchange, and placing an entry here does not buy or sell anything. It exists to help you enforce your own 1-week max-hold rule.</p>
+    <div class="grid grid-4">
+      <div class="field"><label>Coin</label><input id="jSym" placeholder="e.g. SOL"></div>
+      <div class="field"><label>Entry price ($)</label><input id="jEntry" type="number" step="any"></div>
+      <div class="field"><label>Stop-loss ($)</label><input id="jStop" type="number" step="any"></div>
+      <div class="field"><label>Take-profit ($)</label><input id="jTarget" type="number" step="any"></div>
+    </div>
+    <button class="btn" onclick="addJournalEntry()">Log trade</button>
+  </div>
+  <div class="section-title">Open trades</div>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Coin</th><th>Entered</th><th>Entry</th><th>Stop</th><th>Target</th><th>Day</th><th>Status</th><th></th></tr></thead>
+      <tbody id="journalBody"></tbody>
+    </table>
+    <div id="journalEmpty" class="empty">No open trades logged.</div>
+  </div>
+  <div class="section-title">Closed trades</div>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Coin</th><th>Entered</th><th>Closed</th><th>Entry</th><th>Exit</th><th>Result</th><th></th></tr></thead>
+      <tbody id="journalClosedBody"></tbody>
+    </table>
+    <div id="journalClosedEmpty" class="empty">No closed trades yet.</div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div id="tab-settings" class="tabs-hidden">
+  <div class="card">
+    <h3 style="color:var(--text);font-size:16px;margin-bottom:10px">No API key needed</h3>
+    <p class="muted">SwingScope runs entirely on CoinGecko's free public "keyless" API — nothing to sign up for or paste in here. Rate limits (~10–30 requests/minute) are handled by pacing requests automatically.</p>
+  </div>
+  <div class="section-title">Setup thresholds</div>
+  <div class="card">
+    <div class="grid grid-2">
+      <div class="field"><label>Min fundamentals score for a "Setup" flag (/4)</label><input id="ruleFund" type="number" min="0" max="4" onchange="saveRules()"></div>
+      <div class="field"><label>Min technical score for a "Setup" flag (/5)</label><input id="ruleTech" type="number" min="0" max="5" onchange="saveRules()"></div>
+    </div>
+  </div>
+  <div class="section-title">Backup</div>
+  <div class="card">
+    <div class="row">
+      <button class="btn btn-ghost btn-sm" onclick="exportData()">Export backup (.json)</button>
+      <label class="btn btn-ghost btn-sm" style="cursor:pointer">Import backup<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
+    </div>
+  </div>
+  <div class="section-title">Danger zone</div>
+  <div class="card">
+    <div class="row">
+      <button class="btn-danger btn btn-sm" onclick="if(confirm('Erase all SwingScope data in this browser? This cannot be undone.'))resetAll()">Erase all data</button>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+/* ================= STORAGE (single local profile, no login, no wallet, no keys) ================= */
+const STORE_KEY='swingscope_v1';
+let D=null;
+function loadDB(){
+  try{D=JSON.parse(localStorage.getItem(STORE_KEY))||defaultData();}catch(e){D=defaultData();}
+  if(!D.crypto)D.crypto=[];
+  if(!D.analyses)D.analyses={};
+  if(!D.idCache)D.idCache={};
+  if(!D.journal)D.journal=[];
+  if(!D.rules)D.rules={fundBuy:3,techBuy:3};
+}
+function saveDB(){localStorage.setItem(STORE_KEY,JSON.stringify(D));}
+function defaultData(){return{crypto:[],analyses:{},idCache:{},journal:[],rules:{fundBuy:3,techBuy:3},lastRefresh:0};}
+
+/* ================= HELPERS ================= */
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmt$(n){
+  if(n==null||!isFinite(n))return'—';
+  const neg=n<0;n=Math.abs(n);
+  const digits=n<1?6:n<10?4:2;
+  return(neg?'-':'')+'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:digits});
+}
+function toast(msg){
+  const t=document.createElement('div');t.className='toast';t.textContent=msg;
+  document.body.appendChild(t);setTimeout(()=>t.remove(),2600);
+}
+function showTab(t){
+  document.querySelectorAll('main > div[id^="tab-"]').forEach(el=>el.classList.add('tabs-hidden'));
+  document.getElementById('tab-'+t).classList.remove('tabs-hidden');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+}
+function globalJump(){
+  const el=document.getElementById('globalSearch');
+  const v=(el.value||'').trim();
+  if(!v)return;
+  el.value='';
+  document.getElementById('aTicker').value=v;
+  runAnalyzer();
+}
+function toReturns(closes){
+  const r=[];
+  for(let i=1;i<closes.length;i++){if(closes[i-1]>0)r.push((closes[i]-closes[i-1])/closes[i-1]);}
+  return r;
+}
+function percentileOf(arr,p){
+  const sorted=Array.from(arr).sort((a,b)=>a-b);
+  const idx=Math.floor(p/100*(sorted.length-1));
+  return sorted[idx];
+}
+/* Dependency-free box-and-whisker: whiskers = 5th-95th pct, box = 25th-75th pct (IQR), line = median. */
+function drawBoxWhisker(canvasId,p5,p25,p50,p75,p95){
+  const canvas=document.getElementById(canvasId);if(!canvas)return;
+  const wrap=canvas.closest('.card')||canvas.parentElement;
+  const w=(wrap&&wrap.clientWidth?wrap.clientWidth:600)-40,h=140;
+  const dpr=window.devicePixelRatio||1;
+  canvas.width=w*dpr;canvas.height=h*dpr;
+  canvas.style.width=w+'px';canvas.style.height=h+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+  const pad=54;
+  const min=Math.min(p5,p25,p50),max=Math.max(p95,p75,p50);
+  const range=(max-min)||1;
+  const x=v=>pad+((v-min)/range)*(w-2*pad);
+  const midY=h/2-6,boxH=36;
+  ctx.strokeStyle='#8e8e93';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(x(p5),midY);ctx.lineTo(x(p95),midY);ctx.stroke();
+  [p5,p95].forEach(v=>{ctx.beginPath();ctx.moveTo(x(v),midY-10);ctx.lineTo(x(v),midY+10);ctx.stroke();});
+  const boxColor=p50>=0?'rgba(0,200,5,.35)':'rgba(255,59,48,.35)';
+  const boxBorder=p50>=0?'#00c805':'#ff3b30';
+  const bx=x(p25),bw2=Math.max(2,x(p75)-x(p25));
+  ctx.fillStyle=boxColor;ctx.fillRect(bx,midY-boxH/2,bw2,boxH);
+  ctx.strokeStyle=boxBorder;ctx.lineWidth=2;ctx.strokeRect(bx,midY-boxH/2,bw2,boxH);
+  ctx.strokeStyle='#ffffff';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(x(p50),midY-boxH/2);ctx.lineTo(x(p50),midY+boxH/2);ctx.stroke();
+  ctx.font='11px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textAlign='center';
+  ctx.fillStyle='#8e8e93';
+  ctx.fillText((p5>=0?'+':'')+p5.toFixed(1)+'%',x(p5),midY+36);
+  ctx.fillText((p95>=0?'+':'')+p95.toFixed(1)+'%',x(p95),midY+36);
+  ctx.fillText((p25>=0?'+':'')+p25.toFixed(1)+'%',x(p25),midY-boxH/2-10);
+  ctx.fillText((p75>=0?'+':'')+p75.toFixed(1)+'%',x(p75),midY-boxH/2-10);
+  ctx.fillStyle='#ffffff';ctx.font='bold 12px -apple-system,BlinkMacSystemFont,sans-serif';
+  ctx.fillText('median '+(p50>=0?'+':'')+p50.toFixed(1)+'%',x(p50),midY+boxH/2+18);
+}
+
+/* ================= COINGECKO — keyless public API, no key needed ================= */
+const CG_BASE='https://api.coingecko.com/api/v3';
+async function cg(path){
+  const res=await fetch(CG_BASE+path);
+  if(!res.ok){
+    if(res.status===429)throw new Error('RATE_LIMIT');
+    throw new Error('HTTP_'+res.status);
+  }
+  return res.json();
+}
+const CG_COMMON={BTC:'bitcoin',ETH:'ethereum',SOL:'solana',XRP:'ripple',ADA:'cardano',DOGE:'dogecoin',
+  DOT:'polkadot',MATIC:'matic-network',POL:'polygon-ecosystem-token',LTC:'litecoin',LINK:'chainlink',
+  AVAX:'avalanche-2',SHIB:'shiba-inu',TRX:'tron',BCH:'bitcoin-cash',XLM:'stellar',ATOM:'cosmos',
+  UNI:'uniswap',ETC:'ethereum-classic',USDT:'tether',USDC:'usd-coin',BNB:'binancecoin'};
+async function resolveCoinId(input){
+  const up=input.trim().toUpperCase();
+  if(CG_COMMON[up])return{id:CG_COMMON[up],symbol:up};
+  if(!D.idCache)D.idCache={};
+  if(D.idCache[up])return D.idCache[up];
+  const q=input.trim().toLowerCase();
+  const r=await cg('/search?query='+encodeURIComponent(q));
+  const coins=(r&&r.coins)||[];
+  if(!coins.length)throw new Error('NO_COIN');
+  const best=[...coins].sort((a,b)=>(a.market_cap_rank||99999)-(b.market_cap_rank||99999))[0];
+  const resolved={id:best.id,symbol:(best.symbol||input).toUpperCase()};
+  D.idCache[up]=resolved;saveDB();
+  return resolved;
+}
+async function getCoinDetail(id){
+  return cg('/coins/'+id+'?localization=false&tickers=true&market_data=true&community_data=false&developer_data=false&sparkline=false');
+}
+async function getCoinChart(id,days){
+  return cg('/coins/'+id+'/market_chart?vs_currency=usd&days='+(days||90)+'&interval=daily');
+}
+let _catListCache=null;
+async function getCategoryList(){
+  if(_catListCache)return _catListCache;
+  const r=await cg('/coins/categories/list');
+  _catListCache=r||[];
+  return _catListCache;
+}
+async function getCoinsByCategory(catId){
+  return cg('/coins/markets?vs_currency=usd&category='+encodeURIComponent(catId)+'&order=market_cap_desc&per_page=20&page=1&price_change_percentage=24h,7d');
+}
+
+/* ================= TECHNICAL / CANDLE ANALYSIS ================= */
+/* All computed from daily closing prices (CoinGecko's market_chart, interval=daily) — not full intraday
+   OHLC — so this is a close-price approximation of trend/channel signals, not tick-level candle analysis. */
+function computeTechnical(closes,volumes){
+  const out={sma20:null,sma50:null,rsi14:null,high20:null,low20:null,volRecent:null,volPrior:null};
+  const n=closes.length;
+  if(n>=20){
+    const last20=closes.slice(-20);
+    out.sma20=last20.reduce((a,b)=>a+b,0)/20;
+    out.high20=Math.max(...last20);
+    out.low20=Math.min(...last20);
+  }
+  if(n>=50)out.sma50=closes.slice(-50).reduce((a,b)=>a+b,0)/50;
+  if(n>=15){
+    const deltas=[];
+    for(let i=n-14;i<n;i++)deltas.push(closes[i]-closes[i-1]);
+    const gains=deltas.filter(d=>d>0),losses=deltas.filter(d=>d<0).map(d=>-d);
+    const avgGain=gains.reduce((a,b)=>a+b,0)/14,avgLoss=losses.reduce((a,b)=>a+b,0)/14;
+    out.rsi14=avgLoss===0?100:100-(100/(1+avgGain/avgLoss));
+  }
+  if(volumes&&volumes.length>=25){
+    out.volRecent=volumes.slice(-5).reduce((a,b)=>a+b,0)/5;
+    out.volPrior=volumes.slice(-25,-5).reduce((a,b)=>a+b,0)/20;
+  }
+  return out;
+}
+function suggestStopTarget(price,sigmaAnnual){
+  if(price==null||sigmaAnnual==null||sigmaAnnual<=0)return null;
+  const weeklyVol=sigmaAnnual/Math.sqrt(52);
+  const stop=price*(1-1.5*weeklyVol);
+  const target=price*(1+2*weeklyVol);
+  return{stop,target,weeklyVol};
+}
+
+/* ================= SCORING ENGINE ================= */
+async function scoreCoin(input,full){
+  if(full===undefined)full=true;
+  const out={input,id:null,symbol:null,name:null,when:Date.now(),price:null,
+    fundamentals:[],technical:[],fScore:0,fTotal:0,tScore:0,tTotal:0,
+    sigma:null,stopTarget:null,mc:null,error:null};
+  let resolved=null;
+  try{resolved=await resolveCoinId(input);}catch(e){out.error='NO_COIN';return out;}
+  out.id=resolved.id;out.symbol=resolved.symbol;
+  let detail=null;
+  try{detail=await getCoinDetail(resolved.id);}catch(e){out.error=e.message;return out;}
+  const md=(detail&&detail.market_data)||{};
+  out.name=detail.name||resolved.id;
+  out.price=md.current_price&&md.current_price.usd;
+  const add=(list,name,target,value,pass,note)=>{list.push({name,target,value,pass,note:note||''});};
+
+  /* ---- FUNDAMENTALS (4) — tradeable, not a ghost coin ---- */
+  const rank=md.market_cap_rank;
+  add(out.fundamentals,'Market Cap Rank','Top 300',rank==null?null:'#'+rank,rank==null?null:rank<=300);
+  const mcap=md.market_cap&&md.market_cap.usd,vol=md.total_volume&&md.total_volume.usd;
+  let liqPass=null,liqVal=null;
+  if(mcap>0&&vol!=null){const ratio=vol/mcap;liqPass=ratio>=0.03;liqVal=(ratio*100).toFixed(1)+'% of market cap traded/24h';}
+  add(out.fundamentals,'Liquidity (Volume/Market Cap)','≥ 3%',liqVal,liqPass,liqPass==null?'Data unavailable':'');
+  const circ=md.circulating_supply,maxS=md.max_supply;
+  let supPass=null,supVal=null;
+  if(maxS==null&&circ!=null){supPass=true;supVal='No max supply cap (uncapped)';}
+  else if(maxS>0&&circ!=null){const pct=circ/maxS*100;supPass=pct>=80;supVal=pct.toFixed(1)+'% of max supply circulating';}
+  add(out.fundamentals,'Supply Dilution Risk','≥80% circulating, or uncapped',supVal,supPass,supPass==null?'Data unavailable':'');
+  let exVal=null,exPass=null;
+  if(detail.tickers&&Array.isArray(detail.tickers)){
+    const exchanges=new Set(detail.tickers.map(t=>t.market&&t.market.name).filter(Boolean));
+    exVal=exchanges.size+' exchange'+(exchanges.size===1?'':'s')+' listing it';
+    exPass=exchanges.size>=8;
+  }
+  add(out.fundamentals,'Exchange Breadth','Listed on 8+ exchanges',exVal,exPass,exPass==null?'Data unavailable':'');
+  out.fScore=out.fundamentals.filter(c=>c.pass===true).length;
+  out.fTotal=out.fundamentals.filter(c=>c.pass!==null).length;
+
+  /* ---- TECHNICAL / CANDLE ANALYSIS (5) — computed from daily closing prices ---- */
+  try{
+    const chart=await getCoinChart(resolved.id,120);
+    const closes=(chart.prices||[]).map(p=>p[1]);
+    const volumes=(chart.total_volumes||[]).map(v=>v[1]);
+    const t=computeTechnical(closes,volumes);
+    let trendPass=null,trendVal=null;
+    if(t.sma20!=null&&t.sma50!=null&&out.price!=null){
+      trendPass=out.price>t.sma20&&t.sma20>t.sma50;
+      trendVal='Price $'+out.price.toFixed(2)+' vs SMA20 $'+t.sma20.toFixed(2)+' vs SMA50 $'+t.sma50.toFixed(2);
+    }
+    add(out.technical,'Trend Structure','Price > SMA20 > SMA50 (uptrend)',trendVal,trendPass,trendPass==null?'Needs 50 days of price history':'');
+    add(out.technical,'RSI (14-day)','40–70 (healthy, not extreme)',t.rsi14==null?null:t.rsi14.toFixed(0),t.rsi14==null?null:(t.rsi14>=40&&t.rsi14<=70),'Above 70 risks chasing overbought; below 40 risks catching a falling knife. A swing-trading heuristic, not a hard rule.');
+    let hiPass=null,hiVal=null;
+    if(t.high20!=null&&out.price!=null){hiPass=out.price>=0.9*t.high20;hiVal='$'+out.price.toFixed(2)+' vs 20-day high $'+t.high20.toFixed(2);}
+    add(out.technical,'Near 20-Day High','Within 10% of 20-day high',hiVal,hiPass,hiPass==null?'Needs 20 days of price history':'');
+    let loPass=null,loVal=null;
+    if(t.low20!=null&&out.price!=null){loPass=out.price>1.05*t.low20;loVal='$'+out.price.toFixed(2)+' vs 20-day low $'+t.low20.toFixed(2);}
+    add(out.technical,'Clear of 20-Day Low','More than 5% above 20-day low',loVal,loPass,loPass==null?'Needs 20 days of price history':'');
+    let volPass=null,volVal=null;
+    if(t.volRecent!=null&&t.volPrior!=null&&t.volPrior>0){
+      const chg=(t.volRecent-t.volPrior)/t.volPrior*100;
+      volPass=chg>0;volVal=(chg>=0?'+':'')+chg.toFixed(0)+'% vs prior 20-day avg volume';
+    }
+    add(out.technical,'Volume Confirmation','Rising 5-day avg volume',volVal,volPass,volPass==null?'Needs volume history':'');
+
+    /* volatility for stop/target sizing and the probability projection */
+    const rets=toReturns(closes);
+    if(rets.length>20){
+      const meanR=rets.reduce((a,b)=>a+b,0)/rets.length;
+      const variance=rets.reduce((a,b)=>a+(b-meanR)*(b-meanR),0)/(rets.length-1);
+      out.sigma=Math.sqrt(variance)*Math.sqrt(365);
+      out.histMeanDaily=meanR;
+    }
+    if(out.price!=null&&out.sigma!=null)out.stopTarget=suggestStopTarget(out.price,out.sigma);
+  }catch(e){}
+
+  out.tScore=out.technical.filter(c=>c.pass===true).length;
+  out.tTotal=out.technical.filter(c=>c.pass!==null).length;
+
+  if(!full)return out;
+
+  /* ---- PROBABILITY PROJECTION (Monte Carlo, 7-day horizon by default) — informational ---- */
+  try{
+    out.mc=runCoinMonteCarlo(out.price,out.sigma,out.histMeanDaily,7,4000);
+  }catch(e){}
+  return out;
+}
+function verdictOfCoin(sc){
+  if(sc.error)return{label:'No data',cls:'pill-na',key:'na'};
+  const r=D.rules;
+  if(sc.fScore>=r.fundBuy&&sc.tScore>=r.techBuy)return{label:'Setup flagged',cls:'pill-buy',key:'buy'};
+  if(sc.tScore>=r.techBuy)return{label:'Technical only — thin fundamentals',cls:'pill-watch',key:'watch'};
+  if(sc.fScore>=r.fundBuy)return{label:'Solid coin, no technical trigger',cls:'pill-watch',key:'watch'};
+  if(sc.tTotal>=3&&sc.tScore<=1)return{label:'Weak setup',cls:'pill-sell',key:'sell'};
+  return{label:'No setup yet',cls:'pill-na',key:'no'};
+}
+
+/* ================= PROBABILITY PROJECTION (Monte Carlo) ================= */
+/* Uses this coin's OWN historical mean daily return and volatility (not a CAPM/equity factor model —
+   crypto has no clean beta/market-risk-premium equivalent). Historical mean return is a genuinely noisy,
+   backward-looking estimator — treat the output as a range under stated assumptions, not a forecast. */
+function runCoinMonteCarlo(price,sigmaAnnual,meanDaily,days,sims){
+  if(price==null||sigmaAnnual==null||meanDaily==null)return null;
+  const dailySigma=sigmaAnnual/Math.sqrt(365);
+  const results=new Float64Array(sims);
+  for(let i=0;i<sims;i++){
+    let p=price;
+    for(let d=0;d<days;d++){
+      const u1=Math.random()||1e-9,u2=Math.random();
+      const z=Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);
+      p*=Math.exp((meanDaily-0.5*dailySigma*dailySigma)+dailySigma*z);
+    }
+    results[i]=(p/price-1)*100;
+  }
+  return{
+    days,sims,
+    p5:percentileOf(results,5),p25:percentileOf(results,25),p50:percentileOf(results,50),
+    p75:percentileOf(results,75),p95:percentileOf(results,95)
+  };
+}
+
+/* ================= SORTING ================= */
+let wSort={col:null,dir:1};
+const SIGNAL_RANK={buy:4,watch:3,hold:2,sell:1,na:0,no:0};
+function sortWatch(col){if(wSort.col===col)wSort.dir*=-1;else{wSort.col=col;wSort.dir=1;}renderAll();}
+function applySort(arr,sortState,getters){
+  if(!sortState.col||!getters[sortState.col])return arr;
+  const get=getters[sortState.col];
+  return[...arr].sort((a,b)=>{
+    const va=get(a),vb=get(b);
+    if(va==null&&vb==null)return 0;
+    if(va==null)return 1;
+    if(vb==null)return -1;
+    if(typeof va==='string')return va.localeCompare(vb)*sortState.dir;
+    return(va-vb)*sortState.dir;
+  });
+}
+function updateSortHeaders(prefix,sortState,labels){
+  Object.entries(labels).forEach(([col,label])=>{
+    const th=document.getElementById(prefix+'_'+col);
+    if(!th)return;
+    th.textContent=label+(sortState.col===col?(sortState.dir===1?' ▲':' ▼'):'');
+  });
+}
+
+/* ================= WATCHLIST ACTIONS ================= */
+function addWatch(){
+  const raw=document.getElementById('cTicker').value.trim();
+  if(!raw)return;
+  if(!D.crypto.some(c=>c.toLowerCase()===raw.toLowerCase()))D.crypto.push(raw);
+  document.getElementById('cTicker').value='';
+  saveDB();renderAll();refreshOne(raw);
+}
+function removeWatch(i){D.crypto.splice(i,1);saveDB();renderAll();}
+/* Called from Discover results, where we already know the exact CoinGecko id — skip resolveCoinId's
+   /search call entirely by pre-filling the id cache, then refresh normally. */
+function addFromDiscover(id,symbol){
+  if(!D.idCache)D.idCache={};
+  D.idCache[symbol]={id,symbol};
+  if(!D.crypto.includes(symbol))D.crypto.push(symbol);
+  saveDB();renderAll();toast('Added '+symbol+' to watchlist.');
+  refreshOne(symbol);
+}
+async function refreshOne(key){
+  try{const sc=await scoreCoin(key,false);D.analyses[key]=sc;}catch(e){}
+  saveDB();renderAll();
+}
+let refreshing=false;
+async function refreshAll(){
+  if(refreshing)return;
+  refreshing=true;
+  const statusEl=document.getElementById('lastRefresh');
+  const list=[...D.crypto];
+  for(let i=0;i<list.length;i++){
+    statusEl.textContent='Refreshing… ('+(i+1)+'/'+list.length+')';
+    try{D.analyses[list[i]]=await scoreCoin(list[i],false);}catch(e){}
+    if(i<list.length-1)await new Promise(r=>setTimeout(r,4500)); // stay well under CoinGecko's ~10-30/min keyless limit
+  }
+  D.lastRefresh=Date.now();
+  saveDB();renderAll();
+  refreshing=false;
+  statusEl.textContent='Updated '+new Date(D.lastRefresh).toLocaleString();
+}
+
+/* ================= DISCOVER ================= */
+async function searchCategories(){
+  const q=(document.getElementById('categorySearch').value||'').trim().toLowerCase();
+  const el=document.getElementById('categoryMatches');
+  if(!q){el.innerHTML='';return;}
+  el.innerHTML='<span class="muted" style="font-size:12px">Searching…</span>';
+  try{
+    const cats=await getCategoryList();
+    const matches=cats.filter(c=>c.name&&c.name.toLowerCase().includes(q)).slice(0,12);
+    if(!matches.length){
+      el.innerHTML='<span class="muted" style="font-size:12px">No categories matched "'+esc(q)+'". Try a broader word like "layer 1", "meme", "defi", or "gaming".</span>';
+      return;
+    }
+    el.innerHTML=matches.map(c=>'<button class="btn btn-ghost btn-sm" onclick="loadCategory(\''+esc(c.category_id)+'\',\''+esc(c.name).replace(/'/g,"\\'")+'\')">'+esc(c.name)+'</button>').join(' ');
+  }catch(e){
+    el.innerHTML='<span class="muted" style="font-size:12px">Could not load categories — CoinGecko may be rate-limiting right now, wait a minute and try again.</span>';
+  }
+}
+async function loadCategory(catId,name){
+  const body=document.getElementById('discoverBody');
+  document.getElementById('discoverEmpty').style.display='none';
+  body.innerHTML='<tr><td colspan="5" class="empty">Loading '+esc(name)+'…</td></tr>';
+  try{
+    const coins=await getCoinsByCategory(catId);
+    if(!coins||!coins.length){body.innerHTML='<tr><td colspan="5" class="empty">No coins found in this category.</td></tr>';return;}
+    body.innerHTML=coins.map(c=>{
+      const ch24=c.price_change_percentage_24h,ch7=c.price_change_percentage_7d_in_currency;
+      return '<tr><td><b>'+esc(c.name)+'</b> <span class="muted">'+esc((c.symbol||'').toUpperCase())+'</span></td>'+
+        '<td>'+fmt$(c.current_price)+'</td><td>'+(c.market_cap_rank!=null?'#'+c.market_cap_rank:'—')+'</td>'+
+        '<td class="'+(ch24>=0?'pos':'neg')+'">'+(ch24!=null?(ch24>=0?'+':'')+ch24.toFixed(1)+'%':'—')+'</td>'+
+        '<td class="'+(ch7>=0?'pos':'neg')+'">'+(ch7!=null?(ch7>=0?'+':'')+ch7.toFixed(1)+'%':'—')+'</td>'+
+        '<td><button class="btn btn-ghost btn-sm" onclick="addFromDiscover(\''+esc(c.id)+'\',\''+esc((c.symbol||'').toUpperCase())+'\')">+ Watch</button></td></tr>';
+    }).join('');
+  }catch(e){
+    body.innerHTML='<tr><td colspan="5" class="empty">Could not load this category — CoinGecko may be rate-limiting right now, wait a minute and try again.</td></tr>';
+  }
+}
+
+/* ================= ANALYZER ================= */
+async function runAnalyzer(){
+  const raw=document.getElementById('aTicker').value.trim();
+  if(!raw)return;
+  showTab('analyzer');
+  const el=document.getElementById('analyzerResult');
+  el.innerHTML='<div class="card" style="margin-top:16px"><div class="empty">Analyzing '+esc(raw)+'…</div></div>';
+  const sc=await scoreCoin(raw,true);
+  D.analyses[raw]=sc;saveDB();
+  renderAnalysis(raw,sc);renderAll();
+}
+function checkRow(c){
+  let s,cls;
+  if(c.pass===true){s='✔ PASS';cls='check-pass';}
+  else if(c.pass===false){s='✘ FAIL';cls='check-fail';}
+  else{s='— N/A';cls='check-na';}
+  return '<tr><td>'+esc(c.name)+'</td><td class="muted">'+esc(c.target)+'</td><td>'+(c.value==null?'<span class="muted">no data</span>':esc(c.value))+'</td><td class="'+cls+'">'+s+'</td><td><small class="src">'+esc(c.note)+'</small></td></tr>';
+}
+function renderAnalysis(input,sc){
+  const el=document.getElementById('analyzerResult');
+  if(sc.error){
+    let msg='Could not load data for '+esc(input)+'.';
+    if(sc.error==='NO_COIN')msg='No coin found matching "'+esc(input)+'" on CoinGecko. Try a different symbol or the full name.';
+    if(sc.error==='RATE_LIMIT')msg='CoinGecko\'s free public API is rate-limited and you hit that limit. Wait a minute and try again.';
+    el.innerHTML='<div class="card" style="margin-top:16px"><div class="empty">'+msg+'</div></div>';
+    return;
+  }
+  const v=verdictOfCoin(sc);
+  const vCls=v.key==='buy'?'v-buy':v.key==='sell'?'v-avoid':v.key==='watch'?'v-watch':'v-hold';
+  const st=sc.stopTarget;
+  el.innerHTML=
+  '<div class="card" style="margin-top:16px">'+
+    '<div class="row"><div class="big">'+esc(sc.name)+' ('+esc(sc.symbol)+') — '+fmt$(sc.price)+'</div><div class="spacer"></div><span class="pill '+v.cls+'">'+v.label+'</span></div>'+
+    '<div class="verdict-box '+vCls+'" style="margin-top:14px"><b>Fundamentals: '+sc.fScore+'/4 ('+sc.fTotal+' had data) &nbsp;|&nbsp; Technical: '+sc.tScore+'/5 ('+sc.tTotal+' had data)</b><br>'+
+    '<span class="muted">These describe liquidity, trend, and momentum characteristics — not a judgment on the project\'s merit, and not an instruction to trade.</span></div>'+
+    '<h3 style="margin-top:22px">1 · Fundamentals — is this tradeable, not a ghost coin?</h3>'+
+    '<div class="score-bar"><div style="width:'+(sc.fScore/4*100)+'%;background:var(--green)"></div></div>'+
+    '<table style="margin-top:10px"><thead><tr><th>Check</th><th>Target</th><th>Actual</th><th>Result</th><th>Note</th></tr></thead><tbody>'+
+    sc.fundamentals.map(checkRow).join('')+'</tbody></table>'+
+    '<h3 style="margin-top:22px">2 · Technical / Candle Signals — from daily closing prices</h3>'+
+    '<div class="score-bar"><div style="width:'+(sc.tScore/5*100)+'%;background:var(--yellow)"></div></div>'+
+    '<table style="margin-top:10px"><thead><tr><th>Check</th><th>Target</th><th>Actual</th><th>Result</th><th>Note</th></tr></thead><tbody>'+
+    sc.technical.map(checkRow).join('')+'</tbody></table>'+
+    '<h3 style="margin-top:22px">3 · Suggested Stop-Loss / Take-Profit (for a ~1-week hold)</h3>'+
+    (st?
+      '<p class="muted" style="margin-bottom:10px">Sized from this coin\'s own historical weekly volatility ('+(st.weeklyVol*100).toFixed(1)+'%), not a prediction — a mechanical way to size a stop/target that fits how much this specific coin actually moves. You place these yourself; nothing here submits an order.</p>'+
+      '<div class="grid grid-3">'+
+      '<div class="card"><h3>Suggested Stop-Loss</h3><div class="big neg">'+fmt$(st.stop)+'</div><div class="muted">'+(((st.stop/sc.price-1)*100).toFixed(1))+'% below current</div></div>'+
+      '<div class="card"><h3>Current Price</h3><div class="big">'+fmt$(sc.price)+'</div></div>'+
+      '<div class="card"><h3>Suggested Take-Profit</h3><div class="big pos">'+fmt$(st.target)+'</div><div class="muted">+'+(((st.target/sc.price-1)*100).toFixed(1))+'% above current</div></div>'+
+      '</div>'+
+      '<div class="row" style="margin-top:12px">'+
+      '<button class="btn btn-ghost btn-sm" onclick="document.getElementById(\'jSym\').value=\''+esc(sc.symbol)+'\';document.getElementById(\'jEntry\').value=\''+sc.price+'\';document.getElementById(\'jStop\').value=\''+st.stop.toFixed(6)+'\';document.getElementById(\'jTarget\').value=\''+st.target.toFixed(6)+'\';showTab(\'journal\');toast(\'Prefilled in the journal — review before logging.\')">Prefill in Trade Journal</button>'+
+      '</div>'
+      :'<p class="empty">Not enough price history to size a stop/target for this coin.</p>')+
+    '<h3 style="margin-top:22px">4 · Probability Projection ('+(sc.mc?sc.mc.days:7)+'-day, matches the 1-week hold horizon)</h3>'+
+    (sc.mc?
+      '<p class="muted" style="margin-bottom:10px">Uses this coin\'s own historical mean daily return and volatility (not a CAPM/market-beta model — crypto has no clean equivalent). Historical mean return is a genuinely noisy estimator; treat this as a range under stated assumptions, not a forecast.</p>'+
+      '<div class="grid grid-3" style="margin-bottom:10px">'+
+      '<div class="card"><h3>Worst case (5th pct)</h3><div class="big neg">'+(sc.mc.p5>=0?'+':'')+sc.mc.p5.toFixed(1)+'%</div></div>'+
+      '<div class="card"><h3>Median</h3><div class="big">'+(sc.mc.p50>=0?'+':'')+sc.mc.p50.toFixed(1)+'%</div></div>'+
+      '<div class="card"><h3>Best case (95th pct)</h3><div class="big pos">'+(sc.mc.p95>=0?'+':'')+sc.mc.p95.toFixed(1)+'%</div></div>'+
+      '</div><div class="chart-box"><canvas id="mcBoxCanvas"></canvas></div>'
+      :'<p class="empty">Not enough price history to run a projection for this coin.</p>')+
+    '<div class="row" style="margin-top:14px">'+
+      (D.crypto.some(c=>c.toLowerCase()===input.toLowerCase())?'':'<button class="btn btn-ghost btn-sm" onclick="D.crypto.push(\''+esc(input).replace(/'/g,"\\'")+'\');saveDB();renderAll();toast(\'Added to watchlist.\')">+ Add to Watchlist</button>')+
+    '</div>'+
+  '</div>';
+  if(sc.mc)drawBoxWhisker('mcBoxCanvas',sc.mc.p5,sc.mc.p25,sc.mc.p50,sc.mc.p75,sc.mc.p95);
+}
+
+/* ================= TRADE JOURNAL (manual, self-reported — no wallet/exchange connection of any kind) ================= */
+function addJournalEntry(){
+  const sym=document.getElementById('jSym').value.trim().toUpperCase();
+  const entry=parseFloat(document.getElementById('jEntry').value);
+  const stop=parseFloat(document.getElementById('jStop').value);
+  const target=parseFloat(document.getElementById('jTarget').value);
+  if(!sym||!isFinite(entry))return toast('Enter at least a coin and an entry price.');
+  D.journal.push({sym,entry,stop:isFinite(stop)?stop:null,target:isFinite(target)?target:null,
+    enteredAt:Date.now(),closedAt:null,exit:null});
+  saveDB();renderAll();
+  document.getElementById('jSym').value='';document.getElementById('jEntry').value='';
+  document.getElementById('jStop').value='';document.getElementById('jTarget').value='';
+  toast('Logged. Max hold is on you to enforce — SwingScope will just remind you.');
+}
+function closeJournalEntry(i){
+  const exit=prompt('Exit price for this trade?');
+  const v=parseFloat(exit);
+  if(!isFinite(v))return;
+  D.journal[i].exit=v;D.journal[i].closedAt=Date.now();
+  saveDB();renderAll();
+}
+function deleteJournalEntry(i){D.journal.splice(i,1);saveDB();renderAll();}
+
+/* ================= SETTINGS ================= */
+function saveRules(){
+  D.rules.fundBuy=parseInt(document.getElementById('ruleFund').value)||0;
+  D.rules.techBuy=parseInt(document.getElementById('ruleTech').value)||0;
+  saveDB();renderAll();toast('Saved.');
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='swingscope-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+}
+function importData(ev){
+  const f=ev.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{
+    const obj=JSON.parse(r.result);
+    D=obj;loadDB();saveDB();renderAll();toast('Backup restored.');
+  }catch(e){toast('That file doesn\'t look like a valid SwingScope backup.');}};
+  r.readAsText(f);
+}
+function resetAll(){D=defaultData();saveDB();renderAll();toast('All data erased.');}
+
+/* ================= RENDER ================= */
+function renderAll(){
+  if(!D)return;
+  document.getElementById('welcomeCard').style.display=D.crypto.length?'none':'block';
+  document.getElementById('dCount').textContent=D.crypto.length;
+  const setupCount=D.crypto.filter(c=>D.analyses[c]&&verdictOfCoin(D.analyses[c]).key==='buy').length;
+  document.getElementById('dSetupCount').textContent=setupCount;
+  document.getElementById('dJournalCount').textContent=D.journal.filter(j=>!j.closedAt).length;
+
+  /* watchlist table */
+  const wb=document.getElementById('watchBody');wb.innerHTML='';
+  document.getElementById('watchEmpty').style.display=D.crypto.length?'none':'block';
+  const wGetters={
+    sym:x=>x.c,
+    price:x=>{const sc=D.analyses[x.c];return sc&&!sc.error?sc.price:null;},
+    fund:x=>{const sc=D.analyses[x.c];return sc&&!sc.error?sc.fScore:null;},
+    tech:x=>{const sc=D.analyses[x.c];return sc&&!sc.error?sc.tScore:null;},
+    signal:x=>{const sc=D.analyses[x.c];const v=sc?verdictOfCoin(sc):null;return v?SIGNAL_RANK[v.key]:null;}
+  };
+  updateSortHeaders('wTh',wSort,{sym:'Coin',price:'Price',fund:'Fundamentals',tech:'Technical',signal:'Setup'});
+  applySort(D.crypto.map((c,i)=>({c,i})),wSort,wGetters).forEach(({c,i})=>{
+    const sc=D.analyses[c];const v=sc?verdictOfCoin(sc):null;
+    const label=sc&&!sc.error?sc.name+' ('+sc.symbol+')':c;
+    const stTxt=sc&&sc.stopTarget?fmt$(sc.stopTarget.stop)+' / '+fmt$(sc.stopTarget.target):'—';
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td><b>'+esc(label)+'</b></td><td>'+(sc&&!sc.error&&sc.price!=null?fmt$(sc.price):'—')+'</td>'+
+      '<td>'+(sc&&!sc.error?sc.fScore+'/4':'—')+'</td><td>'+(sc&&!sc.error?sc.tScore+'/5':'—')+'</td>'+
+      '<td>'+(v?'<span class="pill '+v.cls+'">'+v.label+'</span>':'<span class="muted">refresh to score</span>')+'</td>'+
+      '<td class="muted">'+stTxt+'</td>'+
+      '<td class="row"><button class="btn btn-ghost btn-sm" onclick="document.getElementById(\'aTicker\').value=\''+esc(c)+'\';runAnalyzer()">Analyze</button> <button class="btn-danger btn btn-sm" onclick="removeWatch('+i+')">✕</button></td>';
+    wb.appendChild(tr);
+  });
+
+  /* signals */
+  const sl=document.getElementById('signalsList');
+  const sigs=[];
+  D.crypto.forEach(c=>{
+    const sc=D.analyses[c];
+    if(sc&&!sc.error){const v=verdictOfCoin(sc);if(v.key==='buy'||v.key==='sell'){
+      const stTxt=sc.stopTarget?' · Stop '+fmt$(sc.stopTarget.stop)+' / Target '+fmt$(sc.stopTarget.target):'';
+      sigs.push({label:sc.name+' ('+sc.symbol+')',v,price:sc.price,sub:'Fundamentals '+sc.fScore+'/4 · Technical '+sc.tScore+'/5'+stTxt,c});
+    }}
+  });
+  if(sigs.length){
+    sl.innerHTML=sigs.map(x=>'<div class="row" style="padding:12px 0;border-bottom:1px solid var(--border)"><div><b>'+esc(x.label)+'</b> — '+(x.price!=null?fmt$(x.price)+' — ':'')+'<span class="pill '+x.v.cls+'">'+x.v.label+'</span><br><span class="muted">'+esc(x.sub)+'</span></div><div class="spacer"></div><button class="btn btn-ghost btn-sm" onclick="document.getElementById(\'aTicker\').value=\''+esc(x.c)+'\';runAnalyzer()">Full analysis</button></div>').join('');
+  }else{
+    sl.innerHTML='<div class="empty">No setups flagged right now. That\'s normal.</div>';
+  }
+
+  /* journal — open */
+  const jb=document.getElementById('journalBody');jb.innerHTML='';
+  const openTrades=D.journal.map((j,i)=>({j,i})).filter(({j})=>!j.closedAt);
+  document.getElementById('journalEmpty').style.display=openTrades.length?'none':'block';
+  const jdl=document.getElementById('journalDueList');
+  const dueTrades=[];
+  openTrades.forEach(({j,i})=>{
+    const daysHeld=Math.floor((Date.now()-j.enteredAt)/864e5);
+    const due=daysHeld>=7;
+    if(due)dueTrades.push(j.sym);
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td><b>'+esc(j.sym)+'</b></td><td>'+new Date(j.enteredAt).toLocaleDateString()+'</td>'+
+      '<td>'+fmt$(j.entry)+'</td><td class="neg">'+(j.stop!=null?fmt$(j.stop):'—')+'</td><td class="pos">'+(j.target!=null?fmt$(j.target):'—')+'</td>'+
+      '<td>Day '+daysHeld+'</td><td>'+(due?'<span class="pill pill-sell">7+ days — review</span>':'<span class="pill pill-watch">Open</span>')+'</td>'+
+      '<td class="row"><button class="btn btn-ghost btn-sm" onclick="closeJournalEntry('+i+')">Close</button> <button class="btn-danger btn btn-sm" onclick="deleteJournalEntry('+i+')">✕</button></td>';
+    jb.appendChild(tr);
+  });
+  jdl.innerHTML=dueTrades.length?('<div class="banner" style="margin-top:20px"><b>Past your 1-week max hold:</b> '+dueTrades.map(esc).join(', ')+'. Go to Trade Journal to close them out.</div>'):'';
+
+  /* journal — closed */
+  const jcb=document.getElementById('journalClosedBody');jcb.innerHTML='';
+  const closedTrades=D.journal.map((j,i)=>({j,i})).filter(({j})=>j.closedAt);
+  document.getElementById('journalClosedEmpty').style.display=closedTrades.length?'none':'block';
+  closedTrades.forEach(({j,i})=>{
+    const pl=j.exit!=null&&j.entry?((j.exit-j.entry)/j.entry*100):null;
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td><b>'+esc(j.sym)+'</b></td><td>'+new Date(j.enteredAt).toLocaleDateString()+'</td><td>'+new Date(j.closedAt).toLocaleDateString()+'</td>'+
+      '<td>'+fmt$(j.entry)+'</td><td>'+fmt$(j.exit)+'</td>'+
+      '<td class="'+(pl!=null&&pl>=0?'pos':'neg')+'">'+(pl!=null?(pl>=0?'+':'')+pl.toFixed(1)+'%':'—')+'</td>'+
+      '<td><button class="btn-danger btn btn-sm" onclick="deleteJournalEntry('+i+')">✕</button></td>';
+    jcb.appendChild(tr);
+  });
+
+  if(D.lastRefresh)document.getElementById('lastRefresh').textContent='Updated '+new Date(D.lastRefresh).toLocaleString();
+  document.getElementById('ruleFund').value=D.rules.fundBuy;
+  document.getElementById('ruleTech').value=D.rules.techBuy;
+}
+
+/* ================= INIT ================= */
+loadDB();
+renderAll();
+</script>
+</body>
+</html>
