@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AssetScope — Stock & Crypto Research</title>
+<style>
+:root{
+  --bg:#000000;--panel:#111113;--panel2:#1c1c1e;--border:#27272a;
+  --text:#ffffff;--muted:#8e8e93;--green:#00c805;--red:#ff3b30;--yellow:#ffb800;--accent:#0a84ff;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+header{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:60px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:50}
+.logo{font-size:17px;font-weight:700;letter-spacing:-.2px}
+.logo span{color:var(--accent)}
+nav{display:flex;gap:2px;height:100%}
+nav button{background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);padding:0 14px;height:100%;font-size:14px;font-weight:600;cursor:pointer;transition:color .1s ease}
+nav button.active{color:var(--text);border-bottom-color:var(--text)}
+nav button:hover{color:var(--text)}
+main{max-width:1100px;margin:0 auto;padding:32px 24px}
+.tabs-hidden{display:none}
+.grid{display:grid;gap:14px}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:820px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.card h3{font-size:13px;color:var(--muted);font-weight:600;margin-bottom:10px}
+.big{font-size:26px;font-weight:700;letter-spacing:-.4px;font-variant-numeric:tabular-nums}
+.pos{color:var(--green)} .neg{color:var(--red)} .warn{color:var(--yellow)}
+.muted{color:var(--muted)}
+.btn{background:var(--text);color:#000;border:none;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer}
+.btn:disabled{opacity:.5;cursor:default}
+.btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--text)}
+.btn-danger{background:transparent;color:var(--red);border:1px solid rgba(255,59,48,.4)}
+.btn-sm{padding:7px 13px;font-size:13px;border-radius:8px}
+input,select,textarea{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;color:var(--muted);font-weight:500;font-size:12px;padding:8px 10px;border-bottom:1px solid var(--border)}
+th.sortable{cursor:pointer;user-select:none;white-space:nowrap}
+th.sortable:hover{color:var(--text)}
+td{padding:12px 10px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+.pill{display:inline-block;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600}
+.pill-buy{background:rgba(0,200,5,.12);color:var(--green)}
+.pill-sell{background:rgba(255,59,48,.12);color:var(--red)}
+.pill-hold{background:rgba(255,184,0,.12);color:var(--yellow)}
+.pill-watch{background:rgba(10,132,255,.12);color:var(--accent)}
+.pill-na{background:var(--panel2);color:var(--muted)}
+.check-pass{color:var(--green);font-weight:600}
+.check-fail{color:var(--red);font-weight:600}
+.check-na{color:var(--muted)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+.section-title{font-size:17px;font-weight:700;margin:30px 0 12px;letter-spacing:-.2px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:500}
+.empty{color:var(--muted);text-align:center;padding:26px 10px;font-size:14px}
+.score-bar{height:6px;background:var(--panel2);border-radius:3px;overflow:hidden;margin-top:8px}
+.score-bar div{height:100%;border-radius:3px}
+.verdict-box{border-radius:12px;padding:14px 16px;font-size:14px}
+.v-buy{background:rgba(0,200,5,.08)}
+.v-watch{background:rgba(10,132,255,.08)}
+.v-avoid{background:rgba(255,59,48,.08)}
+.v-hold{background:rgba(255,184,0,.08)}
+.stat-row{display:flex;gap:32px;padding:20px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:24px;flex-wrap:wrap}
+.stat{display:flex;flex-direction:column;gap:4px}
+.stat-label{color:var(--muted);font-size:13px}
+.stat-value{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums}
+.badge{background:var(--panel2);color:var(--muted);border-radius:6px;font-size:11px;padding:2px 7px;font-weight:600}
+.disclaimer{font-size:12px;color:var(--muted);border-top:1px solid var(--border);margin-top:40px;padding:20px 0;text-align:center;line-height:1.6}
+small.src{color:var(--muted)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:11px 18px;border-radius:10px;font-size:14px;z-index:200;animation:fadeUp .2s ease}
+@keyframes fadeUp{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+.assettag{font-size:10px;font-weight:700;letter-spacing:.4px;padding:2px 6px;border-radius:5px}
+.tag-stock{background:rgba(10,132,255,.14);color:var(--accent)}
+.tag-crypto{background:rgba(255,184,0,.14);color:var(--yellow)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Asset<span>Scope</span></div>
+  <nav>
+    <button data-tab="dashboard" class="active" onclick="showTab('dashboard')">Dashboard</button>
+    <button data-tab="stocks" onclick="showTab('stocks')">Stocks</button>
+    <button data-tab="crypto" onclick="showTab('crypto')">Crypto</button>
+    <button data-tab="analyzer" onclick="showTab('analyzer')">Analyzer</button>
+    <button data-tab="settings" onclick="showTab('settings')">Settings</button>
+  </nav>
+  <div class="row">
+    <input id="globalSearch" placeholder="Jump to ticker/coin…" style="max-width:150px" onkeydown="if(event.key==='Enter')globalJump()">
+    <button class="btn btn-ghost btn-sm" onclick="globalJump()">Go</button>
+  </div>
+</header>
+
+<main>
+
+<!-- DASHBOARD -->
+<div id="tab-dashboard">
+  <div class="greeting" style="font-size:22px;font-weight:700;letter-spacing:-.3px;margin-bottom:2px">AssetScope</div>
+  <div class="muted" style="margin-bottom:24px">Research and track stocks and crypto side by side — a watchlist and checklist tool, not a trading terminal. No accounts are connected and no orders are ever placed.</div>
+  <div id="welcomeCard" class="card" style="display:none;margin-bottom:20px">
+    <h3 style="margin-bottom:10px;color:var(--text);font-size:16px">Get started</h3>
+    <p class="muted" style="margin-bottom:10px">1. Add a free Finnhub API key in <b>Settings</b> — needed for stocks only, crypto needs no key at all (CoinGecko's public API).</p>
+    <p class="muted" style="margin-bottom:10px">2. Add tickers in <b>Stocks</b> and coins in <b>Crypto</b> — AssetScope scores them automatically.</p>
+    <p class="muted">3. Use <b>Analyzer</b> any time to look up one stock or coin in depth, watchlisted or not.</p>
+  </div>
+  <div class="stat-row">
+    <div class="stat"><span class="stat-label">Stocks watched</span><span class="stat-value" id="dStockCount">0</span></div>
+    <div class="stat"><span class="stat-label">Crypto watched</span><span class="stat-value" id="dCryptoCount">0</span></div>
+    <div class="stat"><span class="stat-label">Buy candidates</span><span class="stat-value pos" id="dBuyCount">0</span></div>
+  </div>
+  <div class="section-title">Today's signals</div>
+  <div class="card"><div id="signalsList"><div class="empty">Add stocks and coins to your watchlists, then hit Refresh. Signals show up here.</div></div></div>
+  <div class="row" style="margin-top:14px">
+    <button class="btn" onclick="refreshAll()">Refresh all</button>
+    <span class="muted" id="lastRefresh"></span>
+  </div>
+</div>
+
+<!-- STOCKS -->
+<div id="tab-stocks" class="tabs-hidden">
+  <div class="card">
+    <h3 style="color:var(--text);font-size:16px;margin-bottom:10px">Add a stock</h3>
+    <div class="row">
+      <input id="sTicker" placeholder="Ticker (e.g. AAPL, MSFT)" style="max-width:200px" onkeydown="if(event.key==='Enter')addStockWatch()">
+      <button class="btn" onclick="addStockWatch()">Add</button>
+      <span class="muted">Scored on every refresh against a 22-point checklist (quality, price, momentum).</span>
+    </div>
+  </div>
+  <div class="section-title">Watching</div>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr>
+        <th class="sortable" id="stTh_sym" onclick="sortStocks('sym')">Ticker</th>
+        <th class="sortable" id="stTh_price" onclick="sortStocks('price')">Price</th>
+        <th class="sortable" id="stTh_quality" onclick="sortStocks('quality')">Quality</th>
+        <th class="sortable" id="stTh_pricescore" onclick="sortStocks('pricescore')">Price Score</th>
+        <th class="sortable" id="stTh_momentum" onclick="sortStocks('momentum')">Momentum</th>
+        <th class="sortable" id="stTh_signal" onclick="sortStocks('signal')">Verdict</th>
+        <th></th>
+      </tr></thead>
+      <tbody id="stockBody"></tbody>
+    </table>
+    <p class="muted" style="margin-top:10px">Click a column header to sort, click again to reverse.</p>
+    <div id="stockEmpty" class="empty">No stocks yet. Add one above.</div>
+  </div>
+</div>
+
+<!-- CRYPTO -->
+<div id="tab-crypto" class="tabs-hidden">
+  <div class="card">
+    <h3 style="color:var(--text);font-size:16px;margin-bottom:10px">Add a coin</h3>
+    <div class="row">
+      <input id="cTicker" placeholder="Symbol or name (e.g. BTC, ethereum, SOL)" style="max-width:240px" onkeydown="if(event.key==='Enter')addCryptoWatch()">
+      <button class="btn" onclick="addCryptoWatch()">Add</button>
+      <span class="muted">Scored on every refresh: fundamentals (legitimacy/liquidity) and momentum.</span>
+    </div>
+  </div>
+  <div class="section-title">Watching</div>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr>
+        <th class="sortable" id="ctTh_sym" onclick="sortCrypto('sym')">Coin</th>
+        <th class="sortable" id="ctTh_price" onclick="sortCrypto('price')">Price</th>
+        <th class="sortable" id="ctTh_fund" onclick="sortCrypto('fund')">Fundamentals</th>
+        <th class="sortable" id="ctTh_mom" onclick="sortCrypto('mom')">Momentum</th>
+        <th class="sortable" id="ctTh_signal" onclick="sortCrypto('signal')">Verdict</th>
+        <th></th>
+      </tr></thead>
+      <tbody id="cryptoBody"></tbody>
+    </table>
+    <p class="muted" style="margin-top:10px">Click a column header to sort, click again to reverse. Data via <a href="https://www.coingecko.com" target="_blank" rel="noopener" style="color:var(--accent)">CoinGecko</a>, no API key required.</p>
+    <div id="cryptoEmpty" class="empty">No coins yet. Add one above — try a symbol like BTC or ETH, or a full name.</div>
+  </div>
+</div>
+
+<!-- ANALYZER -->
+<div id="tab-analyzer" class="tabs-hidden">
+  <div class="card">
+    <h3 style="color:var(--text);font-size:16px;margin-bottom:10px">Analyze anything</h3>
+    <div class="row">
+      <input id="aTicker" placeholder="Stock ticker or crypto symbol/name" style="max-width:260px" onkeydown="if(event.key==='Enter')runAnalyzer()">
+      <select id="aType" style="max-width:120px"><option value="auto">Auto-detect</option><option value="stock">Stock</option><option value="crypto">Crypto</option></select>
+      <button class="btn" onclick="runAnalyzer()">Analyze</button>
+    </div>
+    <p class="muted" style="margin-top:8px">Works for anything, watchlisted or not. Auto-detect tries a stock quote first, then falls back to crypto if that fails.</p>
+  </div>
+  <div id="analyzerResult"></div>
+</div>
+
+<!-- SETTINGS -->
+<div id="tab-settings" class="tabs-hidden">
+  <div class="card">
+    <h3 style="color:var(--text);font-size:16px;margin-bottom:10px">Finnhub API key (stocks only)</h3>
+    <p class="muted" style="margin-bottom:12px">Free at <a href="https://finnhub.io/register" target="_blank" rel="noopener" style="color:var(--accent)">finnhub.io/register</a>. Crypto needs no key — CoinGecko's public API is used as-is, keyless, per their attribution terms.</p>
+    <div class="row">
+      <input id="apiKeyInput" placeholder="Paste your Finnhub API key" style="max-width:320px">
+      <button class="btn" onclick="saveApiKey()">Save</button>
+      <span class="muted" id="apiKeyStatus"></span>
+    </div>
+  </div>
+  <div class="section-title">Buy/sell thresholds</div>
+  <div class="card">
+    <div class="grid grid-2">
+      <div class="field"><label>Stocks: min quality score to be a BUY candidate (/12)</label><input id="ruleQBuy" type="number" min="0" max="12" onchange="saveRules()"></div>
+      <div class="field"><label>Stocks: min price score to be a BUY candidate (/6)</label><input id="rulePBuy" type="number" min="0" max="6" onchange="saveRules()"></div>
+      <div class="field"><label>Crypto: min fundamentals score to be a BUY candidate (/5)</label><input id="ruleCFund" type="number" min="0" max="5" onchange="saveRules()"></div>
+      <div class="field"><label>Crypto: min momentum score to be a BUY candidate (/5)</label><input id="ruleCMom" type="number" min="0" max="5" onchange="saveRules()"></div>
+    </div>
+  </div>
+  <div class="section-title">Backup</div>
+  <div class="card">
+    <div class="row">
+      <button class="btn btn-ghost btn-sm" onclick="exportData()">Export backup (.json)</button>
+      <label class="btn btn-ghost btn-sm" style="cursor:pointer">Import backup<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
+    </div>
+  </div>
+  <div class="section-title">Danger zone</div>
+  <div class="card">
+    <div class="row">
+      <button class="btn-danger btn btn-sm" onclick="if(confirm('Erase all AssetScope data in this browser? This cannot be undone.'))resetAll()">Erase all data</button>
+    </div>
+  </div>
+</div>
+
+<div class="disclaimer">
+  AssetScope is a research and watchlist tool, not investment advice and not a trading platform. It never connects to a brokerage or exchange and never places, suggests placing, or is capable of placing a real order. Checklist scores are mechanical rule-of-thumb checks, not guarantees — verify everything yourself before making any financial decision. Crypto assets are especially volatile and speculative; scores here describe liquidity/momentum characteristics only, not a judgment on merit. Stock data via Finnhub. Crypto data via CoinGecko's free public API.
+</div>
+
+</main>
+
+<script>
+/* ================= STORAGE (single local profile, no login/accounts) ================= */
+const STORE_KEY='assetscope_v1';
+let D=null;
+function loadDB(){
+  try{D=JSON.parse(localStorage.getItem(STORE_KEY))||defaultData();}catch(e){D=defaultData();}
+  if(!D.stocks)D.stocks=[];
+  if(!D.crypto)D.crypto=[];
+  if(!D.analyses)D.analyses={};
+  if(!D.cryptoAnalyses)D.cryptoAnalyses={};
+  if(!D.cryptoIdCache)D.cryptoIdCache={};
+  if(!D.rules)D.rules={qBuy:9,pBuy:4,cFundBuy:4,cMomBuy:3};
+}
+function saveDB(){localStorage.setItem(STORE_KEY,JSON.stringify(D));}
+function defaultData(){return{apiKey:'',stocks:[],crypto:[],analyses:{},cryptoAnalyses:{},cryptoIdCache:{},rules:{qBuy:9,pBuy:4,cFundBuy:4,cMomBuy:3},lastRefresh:0};}
+
+/* ================= HELPERS ================= */
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmt$(n){if(n==null||!isFinite(n))return'—';const neg=n<0;n=Math.abs(n);return(neg?'-':'')+'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function pick(obj,keys){for(const k of keys){if(obj&&obj[k]!=null&&isFinite(obj[k]))return obj[k];}return null;}
+function toast(msg){
+  const t=document.createElement('div');t.className='toast';t.textContent=msg;
+  document.body.appendChild(t);setTimeout(()=>t.remove(),2600);
+}
+function showTab(t){
+  document.querySelectorAll('main > div[id^="tab-"]').forEach(el=>el.classList.add('tabs-hidden'));
+  document.getElementById('tab-'+t).classList.remove('tabs-hidden');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+}
+function globalJump(){
+  const el=document.getElementById('globalSearch');
+  const v=(el.value||'').trim();
+  if(!v)return;
+  el.value='';
+  document.getElementById('aTicker').value=v;
+  document.getElementById('aType').value='auto';
+  runAnalyzer();
+}
+function toReturns(closes){
+  const r=[];
+  for(let i=1;i<closes.length;i++){if(closes[i-1]>0)r.push((closes[i]-closes[i-1])/closes[i-1]);}
+  return r;
+}
+function pearson(a,b){
+  const n=Math.min(a.length,b.length);
+  if(n<5)return null;
+  const xs=a.slice(a.length-n),ys=b.slice(b.length-n);
+  const mx=xs.reduce((s,v)=>s+v,0)/n,my=ys.reduce((s,v)=>s+v,0)/n;
+  let num=0,dx2=0,dy2=0;
+  for(let i=0;i<n;i++){const dx=xs[i]-mx,dy=ys[i]-my;num+=dx*dy;dx2+=dx*dx;dy2+=dy*dy;}
+  const den=Math.sqrt(dx2*dy2);
+  return den===0?null:num/den;
+}
+
+/* ================= FINNHUB (stocks) ================= */
+const FH_BASE='https://finnhub.io/api/v1';
+async function fh(path){
+  if(!D.apiKey)throw new Error('NO_KEY');
+  const sep=path.includes('?')?'&':'?';
+  const res=await fetch(FH_BASE+path+sep+'token='+D.apiKey);
+  if(!res.ok)throw new Error('HTTP_'+res.status);
+  return res.json();
+}
+async function getQuote(sym){const q=await fh('/quote?symbol='+sym);if(!q||!q.c)throw new Error('NO_DATA');return q;}
+async function getMetrics(sym){return fh('/stock/metric?symbol='+sym+'&metric=all');}
+async function getEarnings(sym){return fh('/stock/earnings?symbol='+sym);}
+async function getInsiders(sym){
+  const from=new Date(Date.now()-183*864e5).toISOString().slice(0,10);
+  return fh('/stock/insider-transactions?symbol='+sym+'&from='+from);
+}
+let _spyReturnCache=null,_spyReturnFetchedAt=0;
+async function getSpy52wReturn(){
+  if(_spyReturnCache!=null&&Date.now()-_spyReturnFetchedAt<15*60*1000)return _spyReturnCache;
+  try{
+    const mAll=await getMetrics('SPY');
+    const m=(mAll&&mAll.metric)||{};
+    const r=pick(m,['52WeekPriceReturnDaily']);
+    _spyReturnCache=r;_spyReturnFetchedAt=Date.now();
+    return r;
+  }catch(e){return null;}
+}
+
+/* ================= COINGECKO (crypto) — keyless public API, no key needed ================= */
+const CG_BASE='https://api.coingecko.com/api/v3';
+async function cg(path){
+  const res=await fetch(CG_BASE+path);
+  if(!res.ok){
+    if(res.status===429)throw new Error('RATE_LIMIT');
+    throw new Error('HTTP_'+res.status);
+  }
+  return res.json();
+}
+/* Resolve a user-typed symbol or name ("BTC", "bitcoin", "Solana") to a CoinGecko coin id. */
+const CG_COMMON={BTC:'bitcoin',ETH:'ethereum',SOL:'solana',XRP:'ripple',ADA:'cardano',DOGE:'dogecoin',
+  DOT:'polkadot',MATIC:'matic-network',POL:'polygon-ecosystem-token',LTC:'litecoin',LINK:'chainlink',
+  AVAX:'avalanche-2',SHIB:'shiba-inu',TRX:'tron',BCH:'bitcoin-cash',XLM:'stellar',ATOM:'cosmos',
+  UNI:'uniswap',ETC:'ethereum-classic',USDT:'tether',USDC:'usd-coin',BNB:'binancecoin'};
+async function resolveCoinId(input){
+  const up=input.trim().toUpperCase();
+  if(CG_COMMON[up])return{id:CG_COMMON[up],symbol:up};
+  if(!D.cryptoIdCache)D.cryptoIdCache={};
+  if(D.cryptoIdCache[up])return D.cryptoIdCache[up]; // avoids a repeat /search call on every refresh of the same coin
+  const q=input.trim().toLowerCase();
+  const r=await cg('/search?query='+encodeURIComponent(q));
+  const coins=(r&&r.coins)||[];
+  if(!coins.length)throw new Error('NO_COIN');
+  const best=[...coins].sort((a,b)=>(a.market_cap_rank||99999)-(b.market_cap_rank||99999))[0];
+  const resolved={id:best.id,symbol:(best.symbol||input).toUpperCase()};
+  D.cryptoIdCache[up]=resolved;saveDB();
+  return resolved;
+}
+async function getCoinDetail(id){
+  return cg('/coins/'+id+'?localization=false&tickers=true&market_data=true&community_data=true&developer_data=true&sparkline=false');
+}
+async function getCoinChart(id,days){
+  return cg('/coins/'+id+'/market_chart?vs_currency=usd&days='+(days||90)+'&interval=daily');
+}
+let _btcChartCache=null,_btcChartFetchedAt=0;
+async function getBtcCloses(){
+  if(_btcChartCache&&Date.now()-_btcChartFetchedAt<15*60*1000)return _btcChartCache;
+  try{
+    const c=await getCoinChart('bitcoin',180);
+    const closes=(c.prices||[]).map(p=>p[1]);
+    _btcChartCache=closes;_btcChartFetchedAt=Date.now();
+    return closes;
+  }catch(e){return null;}
+}
+
+/* ================= STOCK SCORING ENGINE (ported from QuantFolio's proven 22-point checklist) ================= */
+const manualDefault={guidance:'unknown',runway:'unknown',moat:'unknown',comps:'unknown',fwdpe:null};
+async function scoreStock(sym){
+  sym=sym.toUpperCase();
+  const out={sym,when:Date.now(),price:null,quality:[],priceChecks:[],momentum:[],qScore:0,qTotal:0,pScore:0,pTotal:0,mScore:0,mTotal:0,error:null};
+  const man=manualDefault;
+  let q=null,mAll=null,earn=null,ins=null;
+  try{q=await getQuote(sym);out.price=q.c;}catch(e){out.error=e.message;return out;}
+  try{mAll=await getMetrics(sym);}catch(e){mAll={};}
+  try{earn=await getEarnings(sym);}catch(e){earn=null;}
+  try{ins=await getInsiders(sym);}catch(e){ins=null;}
+  const m=(mAll&&mAll.metric)||{};
+  const seriesA=(mAll&&mAll.series&&mAll.series.annual)||{};
+  const add=(list,name,target,value,pass,note)=>{list.push({name,target,value,pass,note:note||''});};
+
+  /* ---- QUALITY (12) ---- */
+  const revG=pick(m,['revenueGrowthTTMYoy','revenueGrowthYoy','revenueGrowth3Y']);
+  add(out.quality,'Revenue Growth (YoY)','≥ 10%',revG==null?null:revG.toFixed(1)+'%',revG==null?null:revG>=10);
+  const gm=pick(m,['grossMarginTTM','grossMarginAnnual','grossMargin5Y']);
+  add(out.quality,'Gross Margin','≥ 40%',gm==null?null:gm.toFixed(1)+'%',gm==null?null:gm>=40);
+  let omPass=null,omVal=null;
+  const omSeries=seriesA.operatingMargin;
+  if(Array.isArray(omSeries)&&omSeries.length>=2){
+    const sorted=[...omSeries].sort((a,b)=>a.period<b.period?-1:1);
+    const last=sorted[sorted.length-1].v,prev=sorted[sorted.length-2].v;
+    if(isFinite(last)&&isFinite(prev)){
+      omPass=last>prev;
+      const scale=Math.abs(last)<=1.5?100:1;
+      omVal=(prev*scale).toFixed(1)+'% → '+(last*scale).toFixed(1)+'%';
+    }
+  }
+  if(omPass==null){const om=pick(m,['operatingMarginTTM','operatingMarginAnnual']);if(om!=null)omVal=om.toFixed(1)+'% (trend unknown)';}
+  add(out.quality,'Operating Margin','Expanding',omVal,omPass,omPass==null?'Trend data unavailable':'');
+  let fcfPass=null,fcfVal=null;
+  const pfcf=pick(m,['pfcfShareTTM','pfcfShareAnnual','currentEv/freeCashFlowTTM']);
+  if(pfcf!=null){fcfPass=pfcf>0;fcfVal='P/FCF '+pfcf.toFixed(1);}
+  add(out.quality,'Free Cash Flow','Positive',fcfVal,fcfPass,fcfPass==null?'FCF data unavailable':'');
+  let cdPass=null,cdVal=null;
+  const dToE=pick(m,['totalDebt/totalEquityQuarterly','totalDebt/totalEquityAnnual','longTermDebt/equityQuarterly']);
+  const cps=pick(m,['cashPerSharePerShareQuarterly','cashPerSharePerShareAnnual']);
+  if(dToE!=null){
+    const ratio=dToE>10?dToE/100:dToE;
+    cdPass=ratio<0.5;cdVal='Debt/Equity '+ratio.toFixed(2);
+  }
+  if(cps!=null&&out.price)cdVal=(cdVal?cdVal+', ':'')+'Cash/shr $'+cps.toFixed(2);
+  add(out.quality,'Cash vs Debt','Cash > Debt',cdVal,cdPass,'Proxy: low debt-to-equity. Verify on the balance sheet.');
+  const cr=pick(m,['currentRatioQuarterly','currentRatioAnnual']);
+  add(out.quality,'Current Ratio','≥ 1.5',cr==null?null:cr.toFixed(2),cr==null?null:cr>=1.5);
+  const roe=pick(m,['roeTTM','roeRfy','roe5Y']);
+  add(out.quality,'ROE','≥ 15%',roe==null?null:roe.toFixed(1)+'%',roe==null?null:roe>=15);
+  let epsPass=null,epsVal=null;
+  if(earn&&Array.isArray(earn)&&earn.length){
+    const last4=earn.slice(0,4);
+    const beats=last4.filter(e=>e.actual!=null&&e.estimate!=null&&e.actual>=e.estimate).length;
+    epsVal=beats+'/'+last4.length+' beats';epsPass=last4.length>=4?beats===4:null;
+  }
+  add(out.quality,'EPS Beats','4/4 last Qtrs',epsVal,epsPass,epsPass==null?'Earnings history unavailable':'');
+  add(out.quality,'Revenue Guidance','Raised',null,null,'Manual — check latest earnings call (not tracked in this simplified analyzer)');
+  let insPass=null,insVal=null;
+  if(ins&&Array.isArray(ins.data)){
+    const buys=ins.data.filter(t=>t.change>0).length,sells=ins.data.filter(t=>t.change<0).length;
+    insVal=buys+' buys / '+sells+' sells (6mo)';insPass=buys>0&&buys>=sells*0.5;
+  }
+  add(out.quality,'Insider Buying','Active',insVal,insPass,insPass==null?'Insider data unavailable':'');
+  add(out.quality,'Clear Growth Runway','Yes',null,null,'Manual — your judgment (not tracked in this simplified analyzer)');
+  add(out.quality,'Competitive Moat','Durable',null,null,'Manual — your judgment (not tracked in this simplified analyzer)');
+
+  /* ---- PRICE (6) ---- */
+  const pe=pick(m,['peTTM','peBasicExclExtraTTM','peExclExtraTTM','peAnnual']);
+  let peHistPass=null,peHistVal=null;
+  const peSeries=seriesA.pe||seriesA.peTTM;
+  if(Array.isArray(peSeries)&&peSeries.length>=3&&pe!=null){
+    const vals=peSeries.map(x=>x.v).filter(v=>isFinite(v)&&v>0);
+    if(vals.length>=3){const avg=vals.reduce((a,b)=>a+b,0)/vals.length;peHistPass=pe<avg;peHistVal='Now '+pe.toFixed(1)+' vs '+vals.length+'-yr avg '+avg.toFixed(1);}
+  }
+  add(out.priceChecks,'P/E vs Own History','Below average',peHistVal,peHistPass,peHistPass==null?'Historical P/E unavailable':'');
+  add(out.priceChecks,'Comp Analysis','Below comparable companies',null,null,'Manual — compare P/E vs peers (not tracked in this simplified analyzer)');
+  let dcfPass=null,dcfVal=null;
+  if(pfcf!=null&&pfcf>0&&out.price&&revG!=null){
+    const fcfShare=out.price/pfcf;
+    const g=Math.min(Math.max(revG/100,0),0.20),disc=0.10,tg=0.025;
+    let v=0,f=fcfShare;
+    for(let y=1;y<=5;y++){f*=(1+g);v+=f/Math.pow(1+disc,y);}
+    v+=(f*(1+tg))/((disc-tg)*Math.pow(1+disc,5));
+    dcfPass=v>out.price;dcfVal='Est. fair $'+v.toFixed(0)+' vs price $'+out.price.toFixed(0);
+  }
+  add(out.priceChecks,'DCF Value','Undervalued',dcfVal,dcfPass,'Simplified 5-yr FCF model (10% discount, 2.5% terminal). Rough estimate only.');
+  add(out.priceChecks,'P/E','Under 30',pe==null?null:pe.toFixed(1),pe==null?null:(pe>0&&pe<30));
+  let autoFwdPe=null;
+  try{
+    const est=await fh('/stock/eps-estimate?symbol='+sym+'&freq=annual');
+    const rows=(est&&est.data)||[];
+    const now=new Date();
+    const future=rows.filter(r=>r.period&&new Date(r.period)>now&&isFinite(r.epsAvg)&&r.epsAvg>0)
+      .sort((a,b)=>new Date(a.period)-new Date(b.period));
+    if(future.length&&out.price)autoFwdPe=out.price/future[0].epsAvg;
+  }catch(e){}
+  add(out.priceChecks,'Forward P/E','Less than trailing P/E',autoFwdPe==null?null:autoFwdPe.toFixed(1),(autoFwdPe==null||pe==null)?null:autoFwdPe<pe,autoFwdPe!=null?'Auto — Finnhub EPS estimate':'Auto-fetch unavailable on your Finnhub plan');
+  const peg=pick(m,['pegTTM','pegAnnual','peg']);
+  add(out.priceChecks,'PEG Ratio','≤ 1.5',peg==null?null:peg.toFixed(2),peg==null?null:(peg>0&&peg<=1.5));
+
+  /* ---- MOMENTUM (4) ---- */
+  const ret6m=pick(m,['26WeekPriceReturnDaily']);
+  add(out.momentum,'6-Month Return','Positive',ret6m==null?null:ret6m.toFixed(1)+'%',ret6m==null?null:ret6m>0);
+  const ret12m=pick(m,['52WeekPriceReturnDaily']);
+  add(out.momentum,'12-Month Return','Positive',ret12m==null?null:ret12m.toFixed(1)+'%',ret12m==null?null:ret12m>0);
+  const hi52=pick(m,['52WeekHigh']);
+  let hiPass=null,hiVal=null;
+  if(hi52!=null&&hi52>0&&out.price){hiPass=out.price>=0.8*hi52;hiVal='$'+out.price.toFixed(0)+' vs 52-wk high $'+hi52.toFixed(0)+' ('+((out.price/hi52-1)*100).toFixed(1)+'%)';}
+  add(out.momentum,'Near 52-Week High','Within 20% of high',hiVal,hiPass,hiPass==null?'52-week high data unavailable':'');
+  let rsPass=null,rsVal=null;
+  if(ret12m!=null&&sym!=='SPY'){
+    const spyRet=await getSpy52wReturn();
+    if(spyRet!=null){rsPass=ret12m>spyRet;rsVal=ret12m.toFixed(1)+'% vs S&P 500 '+spyRet.toFixed(1)+'%';}
+  }
+  add(out.momentum,'Beating the Market','Outperforming S&P 500 (12mo)',rsVal,rsPass,rsPass==null?'Benchmark comparison unavailable':'');
+
+  out.qScore=out.quality.filter(c=>c.pass===true).length;
+  out.qTotal=out.quality.filter(c=>c.pass!==null).length;
+  out.pScore=out.priceChecks.filter(c=>c.pass===true).length;
+  out.pTotal=out.priceChecks.filter(c=>c.pass!==null).length;
+  out.mScore=out.momentum.filter(c=>c.pass===true).length;
+  out.mTotal=out.momentum.filter(c=>c.pass!==null).length;
+  return out;
+}
+function verdictOfStock(sc){
+  if(sc.error)return{label:'No data',cls:'pill-na',key:'na'};
+  const r=D.rules;
+  if(sc.qScore>=r.qBuy&&sc.pScore>=r.pBuy)return{label:'BUY candidate',cls:'pill-buy',key:'buy'};
+  if(sc.qScore>=r.qBuy)return{label:'Great biz, pricey — WATCH',cls:'pill-watch',key:'watch'};
+  if(sc.qTotal>=6&&sc.qScore<=6)return{label:'Weak fundamentals',cls:'pill-sell',key:'sell'};
+  return{label:'Doesn\'t qualify yet',cls:'pill-na',key:'no'};
+}
+
+/* ================= CRYPTO SCORING ENGINE =================
+   full=true (default) computes everything, including the risk stats (volatility, beta vs BTC), which cost
+   two extra CoinGecko calls (this coin's chart + BTC's chart). full=false skips those — used for routine
+   watchlist refreshes so a multi-coin refresh doesn't burn through CoinGecko's ~10-30/min keyless limit. */
+async function scoreCrypto(input,full){
+  if(full===undefined)full=true;
+  const out={input,id:null,symbol:null,name:null,when:Date.now(),price:null,fundamentals:[],momentum:[],
+    fScore:0,fTotal:0,mScore:0,mTotal:0,sigma:null,betaVsBtc:null,error:null};
+  let resolved=null;
+  try{resolved=await resolveCoinId(input);}catch(e){out.error='NO_COIN';return out;}
+  out.id=resolved.id;out.symbol=resolved.symbol;
+  let detail=null;
+  try{detail=await getCoinDetail(resolved.id);}catch(e){out.error=e.message;return out;}
+  const md=(detail&&detail.market_data)||{};
+  out.name=detail.name||resolved.id;
+  out.price=md.current_price&&md.current_price.usd;
+  const add=(list,name,target,value,pass,note)=>{list.push({name,target,value,pass,note:note||''});};
+
+  /* ---- FUNDAMENTALS (5) — is this a legitimate, liquid, active asset? ---- */
+  const rank=md.market_cap_rank;
+  add(out.fundamentals,'Market Cap Rank','Top 200 (established)',rank==null?null:'#'+rank,rank==null?null:rank<=200);
+  const mcap=md.market_cap&&md.market_cap.usd;
+  const vol=md.total_volume&&md.total_volume.usd;
+  let liqPass=null,liqVal=null;
+  if(mcap>0&&vol!=null){const ratio=vol/mcap;liqPass=ratio>=0.03;liqVal=(ratio*100).toFixed(1)+'% of market cap traded/24h';}
+  add(out.fundamentals,'Liquidity (Volume/Market Cap)','≥ 3%',liqVal,liqPass,liqPass==null?'Market cap or volume data unavailable':'');
+  const circ=md.circulating_supply,maxS=md.max_supply;
+  let supPass=null,supVal=null;
+  if(maxS==null&&circ!=null){supPass=true;supVal='No max supply cap (uncapped)';}
+  else if(maxS>0&&circ!=null){const pct=circ/maxS*100;supPass=pct>=80;supVal=pct.toFixed(1)+'% of max supply already circulating';}
+  add(out.fundamentals,'Supply Dilution Risk','≥80% circulating, or uncapped',supVal,supPass,supPass==null?'Supply data unavailable':'');
+  let exVal=null,exPass=null;
+  if(detail.tickers&&Array.isArray(detail.tickers)){
+    const exchanges=new Set(detail.tickers.map(t=>t.market&&t.market.name).filter(Boolean));
+    exVal=exchanges.size+' exchange'+(exchanges.size===1?'':'s')+' listing it';
+    exPass=exchanges.size>=10;
+  }
+  add(out.fundamentals,'Exchange Breadth','Listed on 10+ exchanges',exVal,exPass,exPass==null?'Exchange listing data unavailable':'');
+  const devScore=detail.developer_score,commScore=detail.community_score;
+  let actVal=null,actPass=null;
+  if(devScore!=null||commScore!=null){
+    actPass=(devScore||0)>10||(commScore||0)>10;
+    actVal='Dev '+(devScore!=null?devScore.toFixed(0):'—')+' / Community '+(commScore!=null?commScore.toFixed(0):'—')+' (CoinGecko scores, 0–100ish)';
+  }
+  add(out.fundamentals,'Development/Community Activity','Meaningfully active',actVal,actPass,actPass==null?'Activity scores unavailable for this coin':'');
+
+  /* ---- MOMENTUM (5) — is the market agreeing, without chasing euphoria? ---- */
+  const ch24=md.price_change_percentage_24h;
+  add(out.momentum,'24-Hour Change','Positive',ch24==null?null:ch24.toFixed(1)+'%',ch24==null?null:ch24>0);
+  const ch7=md.price_change_percentage_7d_in_currency&&md.price_change_percentage_7d_in_currency.usd;
+  add(out.momentum,'7-Day Change','Positive',ch7==null?null:ch7.toFixed(1)+'%',ch7==null?null:ch7>0);
+  const ch30=md.price_change_percentage_30d_in_currency&&md.price_change_percentage_30d_in_currency.usd;
+  add(out.momentum,'30-Day Change','Positive',ch30==null?null:ch30.toFixed(1)+'%',ch30==null?null:ch30>0);
+  const ch1y=md.price_change_percentage_1y_in_currency&&md.price_change_percentage_1y_in_currency.usd;
+  add(out.momentum,'1-Year Change','Positive',ch1y==null?null:ch1y.toFixed(1)+'%',ch1y==null?null:ch1y>0);
+  const athChg=md.ath_change_percentage&&md.ath_change_percentage.usd;
+  let athPass=null,athVal=null;
+  if(athChg!=null){athVal=athChg.toFixed(1)+'% from all-time high';athPass=athChg<=-20&&athChg>=-70;}
+  add(out.momentum,'Distance From ATH','20–70% below peak (not euphoric, not abandoned)',athVal,athPass,'A judgment call, not a hard rule — very close to ATH can mean euphoria/chasing, down 90%+ often (not always) signals a broken project.');
+
+  out.fScore=out.fundamentals.filter(c=>c.pass===true).length;
+  out.fTotal=out.fundamentals.filter(c=>c.pass!==null).length;
+  out.mScore=out.momentum.filter(c=>c.pass===true).length;
+  out.mTotal=out.momentum.filter(c=>c.pass!==null).length;
+
+  /* ---- RISK (informational only) — volatility & beta vs BTC — skipped on light/watchlist refreshes ---- */
+  if(!full)return out;
+  try{
+    const chart=await getCoinChart(resolved.id,180);
+    const closes=(chart.prices||[]).map(p=>p[1]);
+    const rets=toReturns(closes);
+    if(rets.length>20){
+      const meanR=rets.reduce((a,b)=>a+b,0)/rets.length;
+      const variance=rets.reduce((a,b)=>a+(b-meanR)*(b-meanR),0)/(rets.length-1);
+      out.sigma=Math.sqrt(variance)*Math.sqrt(365);
+    }
+    if(resolved.id!=='bitcoin'){
+      const btcCloses=await getBtcCloses();
+      if(btcCloses){
+        const btcRets=toReturns(btcCloses);
+        const n=Math.min(rets.length,btcRets.length);
+        if(n>20){
+          const a=rets.slice(rets.length-n),b=btcRets.slice(btcRets.length-n);
+          const ma=a.reduce((s,v)=>s+v,0)/n,mb=b.reduce((s,v)=>s+v,0)/n;
+          let cov=0,varB=0;
+          for(let i=0;i<n;i++){cov+=(a[i]-ma)*(b[i]-mb);varB+=(b[i]-mb)*(b[i]-mb);}
+          out.betaVsBtc=varB===0?null:cov/varB;
+        }
+      }
+    }
+  }catch(e){}
+  return out;
+}
+function verdictOfCrypto(sc){
+  if(sc.error)return{label:'No data',cls:'pill-na',key:'na'};
+  const r=D.rules;
+  if(sc.fScore>=r.cFundBuy&&sc.mScore>=r.cMomBuy)return{label:'Strong candidate',cls:'pill-buy',key:'buy'};
+  if(sc.mScore>=r.cMomBuy)return{label:'Speculative — weak fundamentals',cls:'pill-watch',key:'watch'};
+  if(sc.fScore>=r.cFundBuy)return{label:'Solid, weak momentum — WATCH',cls:'pill-watch',key:'watch'};
+  if(sc.fTotal>=3&&sc.fScore<=1)return{label:'High risk',cls:'pill-sell',key:'sell'};
+  return{label:'Doesn\'t qualify yet',cls:'pill-na',key:'no'};
+}
+
+/* ================= SORTING ================= */
+let stSort={col:null,dir:1},ctSort={col:null,dir:1};
+const SIGNAL_RANK={buy:4,watch:3,hold:2,sell:1,na:0,no:0};
+function sortStocks(col){if(stSort.col===col)stSort.dir*=-1;else{stSort.col=col;stSort.dir=1;}renderAll();}
+function sortCrypto(col){if(ctSort.col===col)ctSort.dir*=-1;else{ctSort.col=col;ctSort.dir=1;}renderAll();}
+function applySort(arr,sortState,getters){
+  if(!sortState.col||!getters[sortState.col])return arr;
+  const get=getters[sortState.col];
+  return[...arr].sort((a,b)=>{
+    const va=get(a),vb=get(b);
+    if(va==null&&vb==null)return 0;
+    if(va==null)return 1;
+    if(vb==null)return -1;
+    if(typeof va==='string')return va.localeCompare(vb)*sortState.dir;
+    return(va-vb)*sortState.dir;
+  });
+}
+function updateSortHeaders(prefix,sortState,labels){
+  Object.entries(labels).forEach(([col,label])=>{
+    const th=document.getElementById(prefix+'_'+col);
+    if(!th)return;
+    th.textContent=label+(sortState.col===col?(sortState.dir===1?' ▲':' ▼'):'');
+  });
+}
+
+/* ================= WATCHLIST ACTIONS ================= */
+function addStockWatch(){
+  const t=document.getElementById('sTicker').value.trim().toUpperCase();
+  if(!t)return;
+  if(D.stocks.includes(t))return toast(t+' is already on your stock watchlist.');
+  D.stocks.push(t);document.getElementById('sTicker').value='';
+  saveDB();renderAll();refreshOne('stock',t);
+}
+function removeStockWatch(i){D.stocks.splice(i,1);saveDB();renderAll();}
+async function addCryptoWatch(){
+  const raw=document.getElementById('cTicker').value.trim();
+  if(!raw)return;
+  if(!D.crypto.some(c=>c.toLowerCase()===raw.toLowerCase()))D.crypto.push(raw);
+  document.getElementById('cTicker').value='';
+  saveDB();renderAll();refreshOne('crypto',raw);
+}
+function removeCryptoWatch(i){D.crypto.splice(i,1);saveDB();renderAll();}
+
+async function refreshOne(kind,key){
+  if(kind==='stock'){
+    try{const sc=await scoreStock(key);D.analyses[key]=sc;}catch(e){}
+  }else{
+    try{const sc=await scoreCrypto(key,false);D.cryptoAnalyses[key]=sc;}catch(e){}
+  }
+  saveDB();renderAll();
+}
+let refreshing=false;
+async function refreshAll(){
+  if(refreshing)return;
+  refreshing=true;
+  const statusEl=document.getElementById('lastRefresh');
+  const stocks=[...D.stocks],cryptos=[...D.crypto];
+  for(let i=0;i<stocks.length;i++){
+    statusEl.textContent='Refreshing stocks… ('+(i+1)+'/'+stocks.length+')';
+    try{D.analyses[stocks[i]]=await scoreStock(stocks[i]);}catch(e){}
+    if(i<stocks.length-1)await new Promise(r=>setTimeout(r,300));
+  }
+  for(let i=0;i<cryptos.length;i++){
+    statusEl.textContent='Refreshing crypto… ('+(i+1)+'/'+cryptos.length+')';
+    try{D.cryptoAnalyses[cryptos[i]]=await scoreCrypto(cryptos[i],false);}catch(e){}
+    if(i<cryptos.length-1)await new Promise(r=>setTimeout(r,4500)); // light scoring (no risk-stat calls) + wide spacing to stay well under CoinGecko's ~10-30/min keyless limit
+  }
+  D.lastRefresh=Date.now();
+  saveDB();renderAll();
+  refreshing=false;
+  statusEl.textContent='Updated '+new Date(D.lastRefresh).toLocaleString();
+}
+
+/* ================= ANALYZER ================= */
+async function runAnalyzer(){
+  const raw=document.getElementById('aTicker').value.trim();
+  if(!raw)return;
+  const type=document.getElementById('aType').value;
+  showTab('analyzer');
+  const el=document.getElementById('analyzerResult');
+  el.innerHTML='<div class="card" style="margin-top:16px"><div class="empty">Analyzing '+esc(raw)+'…</div></div>';
+  if(type==='stock'){
+    const sc=await scoreStock(raw.toUpperCase());
+    D.analyses[raw.toUpperCase()]=sc;saveDB();
+    renderStockAnalysis(raw.toUpperCase(),sc);renderAll();return;
+  }
+  if(type==='crypto'){
+    const sc=await scoreCrypto(raw);
+    D.cryptoAnalyses[raw]=sc;saveDB();
+    renderCryptoAnalysis(raw,sc);renderAll();return;
+  }
+  // auto-detect: try stock first (if we have a key), then crypto
+  if(D.apiKey){
+    try{
+      const sc=await scoreStock(raw.toUpperCase());
+      if(!sc.error){D.analyses[raw.toUpperCase()]=sc;saveDB();renderStockAnalysis(raw.toUpperCase(),sc);renderAll();return;}
+    }catch(e){}
+  }
+  const sc=await scoreCrypto(raw);
+  D.cryptoAnalyses[raw]=sc;saveDB();
+  renderCryptoAnalysis(raw,sc);renderAll();
+}
+function checkRow(c){
+  let s,cls;
+  if(c.pass===true){s='✔ PASS';cls='check-pass';}
+  else if(c.pass===false){s='✘ FAIL';cls='check-fail';}
+  else{s='— N/A';cls='check-na';}
+  return '<tr><td>'+esc(c.name)+'</td><td class="muted">'+esc(c.target)+'</td><td>'+(c.value==null?'<span class="muted">no data</span>':esc(c.value))+'</td><td class="'+cls+'">'+s+'</td><td><small class="src">'+esc(c.note)+'</small></td></tr>';
+}
+function renderStockAnalysis(sym,sc){
+  const el=document.getElementById('analyzerResult');
+  if(sc.error){
+    let msg='Could not load data for '+esc(sym)+' ('+esc(sc.error)+').';
+    if(sc.error==='NO_KEY')msg='Add your free Finnhub API key in Settings first.';
+    if(sc.error==='NO_DATA')msg='No live quote for '+esc(sym)+' from Finnhub. Check the ticker.';
+    el.innerHTML='<div class="card" style="margin-top:16px"><div class="empty">'+msg+'</div></div>';
+    return;
+  }
+  const v=verdictOfStock(sc);
+  const vCls=v.key==='buy'?'v-buy':v.key==='sell'?'v-avoid':v.key==='watch'?'v-watch':'v-hold';
+  el.innerHTML=
+  '<div class="card" style="margin-top:16px">'+
+    '<div class="row"><span class="assettag tag-stock">STOCK</span><div class="big">'+esc(sym)+' — $'+sc.price.toFixed(2)+'</div><div class="spacer"></div><span class="pill '+v.cls+'">'+v.label+'</span></div>'+
+    '<div class="verdict-box '+vCls+'" style="margin-top:14px"><b>Quality: '+sc.qScore+'/12 ('+sc.qTotal+' had data) &nbsp;|&nbsp; Price: '+sc.pScore+'/6 ('+sc.pTotal+' had data) &nbsp;|&nbsp; Momentum: '+sc.mScore+'/4 ('+sc.mTotal+' had data)</b><br>'+
+    '<span class="muted">Buy rule: quality ≥ '+D.rules.qBuy+' AND price ≥ '+D.rules.pBuy+'. Checks with no data don\'t count as passes. A few checklist rows (revenue guidance, growth runway, moat, peer comps) are manual judgment calls in the full checklist — this simplified analyzer flags them as N/A rather than tracking your answers.</span></div>'+
+    '<h3 style="margin-top:22px">1 · Quality Check — is the business good?</h3>'+
+    '<div class="score-bar"><div style="width:'+(sc.qScore/12*100)+'%;background:var(--green)"></div></div>'+
+    '<table style="margin-top:10px"><thead><tr><th>Check</th><th>Target</th><th>Actual</th><th>Result</th><th>Note</th></tr></thead><tbody>'+
+    sc.quality.map(checkRow).join('')+'</tbody></table>'+
+    '<h3 style="margin-top:22px">2 · Price Check — discount or expensive?</h3>'+
+    '<div class="score-bar"><div style="width:'+(sc.pScore/6*100)+'%;background:var(--accent)"></div></div>'+
+    '<table style="margin-top:10px"><thead><tr><th>Check</th><th>Target</th><th>Actual</th><th>Result</th><th>Note</th></tr></thead><tbody>'+
+    sc.priceChecks.map(checkRow).join('')+'</tbody></table>'+
+    '<h3 style="margin-top:22px">3 · Momentum Check — is the market agreeing?</h3>'+
+    '<div class="score-bar"><div style="width:'+(sc.mScore/4*100)+'%;background:var(--yellow)"></div></div>'+
+    '<table style="margin-top:10px"><thead><tr><th>Check</th><th>Target</th><th>Actual</th><th>Result</th><th>Note</th></tr></thead><tbody>'+
+    sc.momentum.map(checkRow).join('')+'</tbody></table>'+
+    '<div class="row" style="margin-top:14px">'+
+      (D.stocks.includes(sym)?'':'<button class="btn btn-ghost btn-sm" onclick="D.stocks.push(\''+sym+'\');saveDB();renderAll();toast(\'Added to watchlist.\')">+ Add to Watchlist</button>')+
+    '</div>'+
+  '</div>';
+}
+function renderCryptoAnalysis(input,sc){
+  const el=document.getElementById('analyzerResult');
+  if(sc.error){
+    let msg='Could not load data for '+esc(input)+'.';
+    if(sc.error==='NO_COIN')msg='No coin found matching "'+esc(input)+'" on CoinGecko. Try a different symbol or the full name (e.g. "bitcoin" instead of "BTC").';
+    if(sc.error==='RATE_LIMIT')msg='CoinGecko\'s free public API is rate-limited (~10–30 requests/minute with no key) and you hit that limit. Wait a minute and try again.';
+    el.innerHTML='<div class="card" style="margin-top:16px"><div class="empty">'+msg+'</div></div>';
+    return;
+  }
+  const v=verdictOfCrypto(sc);
+  const vCls=v.key==='buy'?'v-buy':v.key==='sell'?'v-avoid':v.key==='watch'?'v-watch':'v-hold';
+  el.innerHTML=
+  '<div class="card" style="margin-top:16px">'+
+    '<div class="row"><span class="assettag tag-crypto">CRYPTO</span><div class="big">'+esc(sc.name)+' ('+esc(sc.symbol)+') — '+fmt$(sc.price)+'</div><div class="spacer"></div><span class="pill '+v.cls+'">'+v.label+'</span></div>'+
+    '<div class="verdict-box '+vCls+'" style="margin-top:14px"><b>Fundamentals: '+sc.fScore+'/5 ('+sc.fTotal+' had data) &nbsp;|&nbsp; Momentum: '+sc.mScore+'/5 ('+sc.mTotal+' had data)</b><br>'+
+    '<span class="muted">Buy rule: fundamentals ≥ '+D.rules.cFundBuy+' AND momentum ≥ '+D.rules.cMomBuy+'. These checklists measure legitimacy/liquidity/momentum characteristics, not a judgment on whether the project itself has merit — that\'s on you to research.</span></div>'+
+    '<h3 style="margin-top:22px">1 · Fundamentals — is this a legitimate, liquid asset?</h3>'+
+    '<div class="score-bar"><div style="width:'+(sc.fScore/5*100)+'%;background:var(--green)"></div></div>'+
+    '<table style="margin-top:10px"><thead><tr><th>Check</th><th>Target</th><th>Actual</th><th>Result</th><th>Note</th></tr></thead><tbody>'+
+    sc.fundamentals.map(checkRow).join('')+'</tbody></table>'+
+    '<h3 style="margin-top:22px">2 · Momentum — is the market agreeing, without chasing euphoria?</h3>'+
+    '<div class="score-bar"><div style="width:'+(sc.mScore/5*100)+'%;background:var(--yellow)"></div></div>'+
+    '<table style="margin-top:10px"><thead><tr><th>Check</th><th>Target</th><th>Actual</th><th>Result</th><th>Note</th></tr></thead><tbody>'+
+    sc.momentum.map(checkRow).join('')+'</tbody></table>'+
+    '<h3 style="margin-top:22px">3 · Risk stats (informational — doesn\'t affect the verdict)</h3>'+
+    '<div class="grid grid-2" style="margin-top:10px">'+
+    '<div class="card"><h3>Annualized Volatility</h3><div class="big">'+(sc.sigma!=null?(sc.sigma*100).toFixed(0)+'%':'—')+'</div><div class="muted">From 6 months of daily prices. For comparison, a typical S&P 500 stock runs roughly 20–35%; most major coins run well above that.</div></div>'+
+    '<div class="card"><h3>Beta vs Bitcoin</h3><div class="big">'+(sc.id==='bitcoin'?'1.00 (is BTC)':sc.betaVsBtc!=null?sc.betaVsBtc.toFixed(2):'—')+'</div><div class="muted">How much this tends to move relative to Bitcoin\'s moves. Above 1 = amplifies BTC\'s swings, below 1 = dampens them.</div></div>'+
+    '</div>'+
+    '<div class="row" style="margin-top:14px">'+
+      (D.crypto.some(c=>c.toLowerCase()===input.toLowerCase())?'':'<button class="btn btn-ghost btn-sm" onclick="D.crypto.push(\''+esc(input).replace(/'/g,"\\'")+'\');saveDB();renderAll();toast(\'Added to watchlist.\')">+ Add to Watchlist</button>')+
+    '</div>'+
+  '</div>';
+}
+
+/* ================= SETTINGS ================= */
+function saveApiKey(){
+  const v=document.getElementById('apiKeyInput').value.trim();
+  D.apiKey=v;saveDB();
+  document.getElementById('apiKeyStatus').textContent=v?'Saved.':'Cleared.';
+  setTimeout(()=>{document.getElementById('apiKeyStatus').textContent='';},2000);
+}
+function saveRules(){
+  D.rules.qBuy=parseInt(document.getElementById('ruleQBuy').value)||0;
+  D.rules.pBuy=parseInt(document.getElementById('rulePBuy').value)||0;
+  D.rules.cFundBuy=parseInt(document.getElementById('ruleCFund').value)||0;
+  D.rules.cMomBuy=parseInt(document.getElementById('ruleCMom').value)||0;
+  saveDB();renderAll();toast('Saved.');
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='assetscope-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+}
+function importData(ev){
+  const f=ev.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{
+    const obj=JSON.parse(r.result);
+    D=obj;loadDB();saveDB();renderAll();toast('Backup restored.');
+  }catch(e){toast('That file doesn\'t look like a valid AssetScope backup.');}};
+  r.readAsText(f);
+}
+function resetAll(){D=defaultData();saveDB();renderAll();toast('All data erased.');}
+
+/* ================= RENDER ================= */
+function renderAll(){
+  if(!D)return;
+  document.getElementById('welcomeCard').style.display=(D.stocks.length||D.crypto.length)?'none':'block';
+  document.getElementById('dStockCount').textContent=D.stocks.length;
+  document.getElementById('dCryptoCount').textContent=D.crypto.length;
+  const buyCount=D.stocks.filter(s=>D.analyses[s]&&verdictOfStock(D.analyses[s]).key==='buy').length+
+    D.crypto.filter(c=>D.cryptoAnalyses[c]&&verdictOfCrypto(D.cryptoAnalyses[c]).key==='buy').length;
+  document.getElementById('dBuyCount').textContent=buyCount;
+
+  /* stock table */
+  const sb=document.getElementById('stockBody');sb.innerHTML='';
+  document.getElementById('stockEmpty').style.display=D.stocks.length?'none':'block';
+  const stGetters={
+    sym:x=>x.s,
+    price:x=>{const sc=D.analyses[x.s];return sc&&!sc.error?sc.price:null;},
+    quality:x=>{const sc=D.analyses[x.s];return sc&&!sc.error?sc.qScore:null;},
+    pricescore:x=>{const sc=D.analyses[x.s];return sc&&!sc.error?sc.pScore:null;},
+    momentum:x=>{const sc=D.analyses[x.s];return sc&&!sc.error?sc.mScore:null;},
+    signal:x=>{const sc=D.analyses[x.s];const v=sc?verdictOfStock(sc):null;return v?SIGNAL_RANK[v.key]:null;}
+  };
+  updateSortHeaders('stTh',stSort,{sym:'Ticker',price:'Price',quality:'Quality',pricescore:'Price Score',momentum:'Momentum',signal:'Verdict'});
+  applySort(D.stocks.map((s,i)=>({s,i})),stSort,stGetters).forEach(({s,i})=>{
+    const sc=D.analyses[s];const v=sc?verdictOfStock(sc):null;
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td><b>'+esc(s)+'</b></td><td>'+(sc&&!sc.error&&sc.price!=null?fmt$(sc.price):'—')+'</td>'+
+      '<td>'+(sc&&!sc.error?sc.qScore+'/12':'—')+'</td><td>'+(sc&&!sc.error?sc.pScore+'/6':'—')+'</td><td>'+(sc&&!sc.error?sc.mScore+'/4':'—')+'</td>'+
+      '<td>'+(v?'<span class="pill '+v.cls+'">'+v.label+'</span>':'<span class="muted">refresh to score</span>')+'</td>'+
+      '<td class="row"><button class="btn btn-ghost btn-sm" onclick="document.getElementById(\'aTicker\').value=\''+esc(s)+'\';document.getElementById(\'aType\').value=\'stock\';runAnalyzer()">Analyze</button> <button class="btn-danger btn btn-sm" onclick="removeStockWatch('+i+')">✕</button></td>';
+    sb.appendChild(tr);
+  });
+
+  /* crypto table */
+  const cb=document.getElementById('cryptoBody');cb.innerHTML='';
+  document.getElementById('cryptoEmpty').style.display=D.crypto.length?'none':'block';
+  const ctGetters={
+    sym:x=>x.c,
+    price:x=>{const sc=D.cryptoAnalyses[x.c];return sc&&!sc.error?sc.price:null;},
+    fund:x=>{const sc=D.cryptoAnalyses[x.c];return sc&&!sc.error?sc.fScore:null;},
+    mom:x=>{const sc=D.cryptoAnalyses[x.c];return sc&&!sc.error?sc.mScore:null;},
+    signal:x=>{const sc=D.cryptoAnalyses[x.c];const v=sc?verdictOfCrypto(sc):null;return v?SIGNAL_RANK[v.key]:null;}
+  };
+  updateSortHeaders('ctTh',ctSort,{sym:'Coin',price:'Price',fund:'Fundamentals',mom:'Momentum',signal:'Verdict'});
+  applySort(D.crypto.map((c,i)=>({c,i})),ctSort,ctGetters).forEach(({c,i})=>{
+    const sc=D.cryptoAnalyses[c];const v=sc?verdictOfCrypto(sc):null;
+    const label=sc&&!sc.error?sc.name+' ('+sc.symbol+')':c;
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td><b>'+esc(label)+'</b></td><td>'+(sc&&!sc.error&&sc.price!=null?fmt$(sc.price):'—')+'</td>'+
+      '<td>'+(sc&&!sc.error?sc.fScore+'/5':'—')+'</td><td>'+(sc&&!sc.error?sc.mScore+'/5':'—')+'</td>'+
+      '<td>'+(v?'<span class="pill '+v.cls+'">'+v.label+'</span>':'<span class="muted">refresh to score</span>')+'</td>'+
+      '<td class="row"><button class="btn btn-ghost btn-sm" onclick="document.getElementById(\'aTicker\').value=\''+esc(c)+'\';document.getElementById(\'aType\').value=\'crypto\';runAnalyzer()">Analyze</button> <button class="btn-danger btn btn-sm" onclick="removeCryptoWatch('+i+')">✕</button></td>';
+    cb.appendChild(tr);
+  });
+
+  /* signals */
+  const sl=document.getElementById('signalsList');
+  const sigs=[];
+  D.stocks.forEach(s=>{const sc=D.analyses[s];if(sc&&!sc.error){const v=verdictOfStock(sc);if(v.key==='buy'||v.key==='sell')sigs.push({label:s,kind:'stock',v,sub:'Quality '+sc.qScore+'/12 · Price '+sc.pScore+'/6'});}});
+  D.crypto.forEach(c=>{const sc=D.cryptoAnalyses[c];if(sc&&!sc.error){const v=verdictOfCrypto(sc);if(v.key==='buy'||v.key==='sell')sigs.push({label:sc.name+' ('+sc.symbol+')',kind:'crypto',v,sub:'Fundamentals '+sc.fScore+'/5 · Momentum '+sc.mScore+'/5'});}});
+  if(sigs.length){
+    sl.innerHTML=sigs.map(x=>'<div class="row" style="padding:12px 0;border-bottom:1px solid var(--border)"><span class="assettag '+(x.kind==='stock'?'tag-stock':'tag-crypto')+'">'+(x.kind==='stock'?'STOCK':'CRYPTO')+'</span>'+
+      '<div><b>'+esc(x.label)+'</b> — <span class="pill '+x.v.cls+'">'+x.v.label+'</span><br><span class="muted">'+esc(x.sub)+'</span></div></div>').join('');
+  }else{
+    sl.innerHTML='<div class="empty">No buy/sell signals right now. That\'s normal — good setups are rare.</div>';
+  }
+
+  if(D.lastRefresh)document.getElementById('lastRefresh').textContent='Updated '+new Date(D.lastRefresh).toLocaleString();
+  document.getElementById('apiKeyInput').value=D.apiKey||'';
+  document.getElementById('ruleQBuy').value=D.rules.qBuy;
+  document.getElementById('rulePBuy').value=D.rules.pBuy;
+  document.getElementById('ruleCFund').value=D.rules.cFundBuy;
+  document.getElementById('ruleCMom').value=D.rules.cMomBuy;
+}
+
+/* ================= INIT ================= */
+loadDB();
+renderAll();
+</script>
+</body>
+</html>
